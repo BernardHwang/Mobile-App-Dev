@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Image } 
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
+import { FloatingAction } from "react-native-floating-action";
 
-const HomeScreen = () => {
+
+const HomeScreen = ({navigation}: any) => {
   const [currentWeek, setCurrentWeek] = useState([]);
   const [selectedDay, setSelectedDay] = useState(moment().startOf('week'));
   const [events, setEvents] = useState([]);
@@ -79,6 +81,16 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20}}>
+        <Text style={{fontSize: 30, fontWeight: 500}}>Home</Text>
+        <Ionicons 
+        name='notifications-outline' 
+        size={25} 
+        color='black' 
+        style={{marginTop: 10}}
+        onPress={()=>{navigation.navigate('Notification')}}
+        />
+      </View>
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -113,7 +125,21 @@ const HomeScreen = () => {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={<Text style={styles.noEventsText}>No events today</Text>}
       />
+      <FloatingAction 
+        actions={[
+          {
+            name: 'create',
+            text: 'Create an Event',
+            icon: <Ionicons name='calendar-outline' color={'white'} size={20}/>,
+            color: '#8A6536'
+          }
+        ]}
+        buttonSize={50}
+        color='#8A6536'
+        onPressItem={() => navigation.navigate('AddEvent')}
+      />
     </View>
+    
   );
 };
 
