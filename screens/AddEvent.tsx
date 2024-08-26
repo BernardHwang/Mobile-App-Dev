@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { InputWithIconLabel } from '../UI'; 
 
-const App = () => {
+const AddEvent = ({navigation}: any) => {
     const [eventTitle, setTitle] = useState<string>('');
     const [startDate, setStartDate] = useState<Date | undefined>(new Date());
     const [endDate, setEndDate] = useState<Date | undefined>(new Date());
@@ -20,9 +21,9 @@ const App = () => {
     
 
     const defaultImages = [
-        require('./images/eventImg1.jpg'),
-        require('./images/eventImg2.jpg'),
-        require('./images/eventImg3.jpg')
+        require('../images/eventImg1.jpg'),
+        require('../images/eventImg2.jpg'),
+        require('../images/eventImg3.jpg')
     ];
     
     
@@ -67,7 +68,7 @@ const App = () => {
         <ScrollView>
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.cancelBtn} onPress={() => {}}>
+                    <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.goBack()}}>
                         <Text style={styles.btnText}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>New Event</Text>
@@ -77,15 +78,15 @@ const App = () => {
                 </View>
 
                 <View style={styles.body}>
-                    <View style={styles.inputContainer}>
-                        <Icon name="calendar-check-o" size={20} color="#8A6536" style={styles.icon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Add Event Title"
-                            value={eventTitle}
-                            onChangeText={setTitle}
-                        />
-                    </View>
+                    <InputWithIconLabel
+                    orientation={'horizontal'}
+                    iconName={"calendar-check-o"}
+                    size={20}
+                    color={"#8A6536"}
+                    placeholder="Add Event Title"
+                    value={eventTitle}
+                    onChangeText={setTitle}
+                    />
 
                     <View style={styles.dateTimeContainer}>
                         <Text style={{marginBottom: 15}}>Start at</Text>
@@ -147,24 +148,26 @@ const App = () => {
                         </View>
                     </View>
 
-                    <View style={styles.inputContainer}>
-                        <Icon name="map-marker" size={20} color="#8A6536" style={styles.icon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder='Add Location'
-                            value={location}
-                            onChangeText={setLocation}
-                        />
-                    </View>
-                    <View style={styles.inputContainer}>
-                        <Icon name="user-plus" size={20} color="#8A6536" style={styles.icon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder='Invite Guest'
-                            value={guest}
-                            onChangeText={setGuest}
-                        />
-                    </View>
+                    <InputWithIconLabel
+                    orientation={'horizontal'}
+                    iconName={"map-marker"}
+                    size={20}
+                    color={"#8A6536"}
+                    placeholder='Add Location'
+                    value={location}
+                    onChangeText={setLocation}
+                    />
+                    
+                    <InputWithIconLabel
+                    orientation={'horizontal'}
+                    iconName={"user-plus"}
+                    size={20}
+                    color={"#8A6536"}
+                    placeholder='Invite Guest'
+                    value={guest}
+                    onChangeText={setGuest}
+                    />
+
                     <View>
                         <Text>Event Description</Text>
                         <TextInput
@@ -267,10 +270,6 @@ const styles = StyleSheet.create({
         paddingBottom: 13, 
         marginHorizontal: 6
     },
-    input: {
-        flex: 1,
-        marginLeft: 10,
-    },
     inputTouchable: {
         flex: 1,
         marginLeft: 10,
@@ -307,4 +306,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default App;
+export default AddEvent;
