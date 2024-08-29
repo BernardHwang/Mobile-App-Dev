@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button, TouchableNativeFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
@@ -88,12 +88,12 @@ const HomeScreen = ({ navigation }) => {
         />
       </View>
 
-      <TouchableNativeFeedback onPress={selectDay}>
+      <TouchableOpacity onPress={selectDay}>
         <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'baseline'}}>
           <Text style={styles.dayFont}>{moment(selectedDay).format('Do')} </Text>
           <Text style={{fontSize: 25}}>{moment(selectedDay).format('MMM')}/{moment(selectedDay).format('YYYY')} ({moment(selectedDay).format('ddd')})</Text>
         </View>
-      </TouchableNativeFeedback>
+      </TouchableOpacity>
 
       <Modal
         animationType="slide"
