@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "978379761243",
+    "firebase_url": "https://ezpz-mobile-app-y2s3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ezpz-mobile-app-y2s3",
+    "storage_bucket": "ezpz-mobile-app-y2s3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:978379761243:android:115037fec0fd7b9a05817e",
+        "android_client_info": {
+          "package_name": "com.asgm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEkEqp8mPuCthzLYodo3lOjEMNhpTfpL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:978379761243:android:3a24c4991bdd334205817e",
+        "android_client_info": {
+          "package_name": "com.ezpz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEkEqp8mPuCthzLYodo3lOjEMNhpTfpL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
