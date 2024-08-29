@@ -1,65 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
+import { Calendar } from 'react-native-calendars';
 
-
-const HomeScreen = ({navigation}: any) => {
-  const [currentWeek, setCurrentWeek] = useState([]);
-  const [selectedDay, setSelectedDay] = useState(moment().startOf('week'));
+const HomeScreen = ({ navigation }) => {
+  // Initialize selectedDay as a moment object
+  const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
-  const [searchItem, setSearchItem] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    generateCurrentWeek();
     fetchEventsForSelectedDay(selectedDay);
   }, [selectedDay]);
 
-  const generateCurrentWeek = () => {
-    const startOfWeek = moment().startOf('week');
-    const endOfWeek = moment().endOf('week');
-
-    const weekDays = [];
-    let day = startOfWeek;
-
-    while (day <= endOfWeek) {
-      weekDays.push(day.clone());
-      day = day.add(1, 'd');
-    }
-
-    setCurrentWeek(weekDays);
+  const selectDay = () => {
+    setModalVisible(!modalVisible);
   };
 
   const fetchEventsForSelectedDay = async (day) => {
     try {
       const eventsRef = firestore().collection('events');
       const querySnapshot = await eventsRef.get();
-
+  
       const fetchedEvents = querySnapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const eventDate = data.date.toDate(); // Firestore timestamp to JavaScript Date object
-          const localEventDate = moment(eventDate).local(); // Convert to local time
+          const eventStartDate = moment(data.startDate.toDate()).local(); // Start date in local time
+          const eventEndDate = moment(data.endDate.toDate()).local(); // End date in local time
+          
           return {
             id: doc.id,
             name: data.name,
             description: data.description,
             image: data.image,
             location: data.location,
-            time: localEventDate.format('HH:mm'), // Format time in local time
-            date: localEventDate, // Keep the local date for comparison
+            time: eventStartDate.format('HH:mm'), // Format time in local time
+            startDate: eventStartDate,
+            endDate: eventEndDate, // Keep the end date for comparison
           };
         })
-        .filter((event) => event.date.isSame(day, 'day')) // Compare dates based on local time
+        .filter((event) => event.startDate.isSameOrBefore(day, 'day') && event.endDate.isSameOrAfter(day, 'day')) // Filter by date range
         .sort((a, b) => moment(a.time, 'HH:mm').diff(moment(b.time, 'HH:mm')));
-
+  
       setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
   };
+  
 
   const renderEventItem = ({ item }) => (
     <View style={styles.eventCard}>
@@ -79,45 +70,61 @@ const HomeScreen = ({navigation}: any) => {
     </View>
   );
 
+  const handleDateChange = (date) => {
+    setSelectedDay(date.dateString);
+    setModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={{flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20}}>
-        <Text style={{fontSize: 30, fontWeight: 500}}>Home</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+        <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
         <Ionicons 
-        name='notifications-outline' 
-        size={25} 
-        color='black' 
-        style={{marginTop: 10}}
-        onPress={()=>{navigation.navigate('Notification')}}
+          name='notifications-outline' 
+          size={25} 
+          color='black' 
+          style={{ marginTop: 10 }}
+          onPress={() => navigation.navigate('Notification')}
         />
-      </View>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search events..."
-          onChangeText={(input) => {
-            setSearchItem(input);
-          }}
-          value={searchItem}
-        />
-        <Ionicons name="search-circle-outline" style={styles.searchIcon} />
       </View>
 
-      <View style={styles.weekContainer}>
-        {currentWeek.map((date, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.dateItem,
-              selectedDay.isSame(date, 'day') && styles.selectedDateItem,
-            ]}
-            onPress={() => setSelectedDay(date)}
-          >
-            <Text style={styles.dateText}>{date.format('ddd')}</Text>
-            <Text style={styles.dateNumber}>{date.format('D')}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <TouchableOpacity onPress={selectDay}>
+        <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'baseline'}}>
+          <Text style={styles.dayFont}>{moment(selectedDay).format('Do')} </Text>
+          <Text style={{fontSize: 25}}>{moment(selectedDay).format('MMM')}/{moment(selectedDay).format('YYYY')} ({moment(selectedDay).format('ddd')})</Text>
+        </View>
+      </TouchableOpacity>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Calendar
+              current={selectedDay}
+              onDayPress={handleDateChange}
+              minDate={moment().format('YYYY-MM-DD')}
+              markedDates={{
+                [selectedDay]: {
+                  selected: true,
+                  selectedColor: '#8A6536', // Background color of the selected date
+                  selectedTextColor: '#FFFFFF', // Text color of the selected date
+                }
+              }}
+              theme={{
+                calendarBackground: '#f0f0f0', // Background color for the calendar
+                todayTextColor: '#8A6536', // Color for today's date
+              }}
+              style={{marginBottom: 20,borderRadius: 15}}
+            />
+            <Button title="Close" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+
       <Text style={styles.eventsHeader}>Events</Text>
       <FlatList
         data={events}
@@ -130,7 +137,7 @@ const HomeScreen = ({navigation}: any) => {
           {
             name: 'create',
             text: 'Create an Event',
-            icon: <Ionicons name='calendar-outline' color={'white'} size={20}/>,
+            icon: <Ionicons name='calendar-outline' color={'white'} size={20} />,
             color: '#8A6536'
           }
         ]}
@@ -139,7 +146,6 @@ const HomeScreen = ({navigation}: any) => {
         onPressItem={() => navigation.navigate('AddEvent')}
       />
     </View>
-    
   );
 };
 
@@ -149,46 +155,9 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 15,
-  },
-  searchInput: {
-    flex: 1,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 8,
-  },
-  searchIcon: {
-    marginLeft: 8,
-    fontSize: 40,
-    color: '#888',
-  },
-  weekContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 16,
-  },
-  dateItem: {
-    alignItems: 'center',
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 2,
-    width: 50,
-  },
-  selectedDateItem: {
-    backgroundColor: '#d0d0d0',
-  },
-  dateText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
-  dateNumber: {
-    fontSize: 15,
-    color: '#888',
+  dayFont:{
+    fontSize: 45,
+    fontWeight:'bold',
   },
   eventCard: {
     backgroundColor: '#f8f8f8',
@@ -229,6 +198,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 25,
     paddingTop: 15,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 });
 
