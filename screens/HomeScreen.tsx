@@ -136,7 +136,10 @@ const HomeScreen = ({navigation}: any) => {
         ]}
         buttonSize={50}
         color='#8A6536'
-        onPressItem={() => navigation.navigate('AddEvent')}
+        onPressItem={() => 
+          navigation.navigate('AddEvent')
+        }
+        overrideWithAction={true}
       />
     </View>
     
