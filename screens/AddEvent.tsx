@@ -126,15 +126,6 @@ const AddEvent = ({navigation}: any) => {
             throw error;
         }
     };
-
-    const handleGuestInputChange = (input: string) => {
-        const emailPattern = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-        if (emailPattern.test(input)) {
-            setGuest(input);
-        } else {
-            Alert.alert('Invalid Email', 'Please enter a valid Gmail address (e.g., example@gmail.com).');
-        }
-    };
     
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -247,7 +238,7 @@ const AddEvent = ({navigation}: any) => {
                         <Text style={{marginBottom: 15}}>Start at</Text>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="calendar" size={20} color="#8A6536" style={styles.icon} />
+                                <Icon name="calendar" size={20} color="#26294D" style={styles.icon} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartDatePicker(true);
@@ -259,7 +250,7 @@ const AddEvent = ({navigation}: any) => {
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="clock-o" size={20} color="#8A6536" style={styles.icon} />
+                                <Icon name="clock-o" size={20} color="#26294D" style={styles.icon} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartTimePicker(true);
@@ -277,7 +268,7 @@ const AddEvent = ({navigation}: any) => {
                         <Text style={{marginBottom: 15}}>End at</Text>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="calendar" size={20} color="#8A6536" style={styles.icon} />
+                                <Icon name="calendar" size={20} color="#26294D" style={styles.icon} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartDatePicker(false);
@@ -289,7 +280,7 @@ const AddEvent = ({navigation}: any) => {
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="clock-o" size={20} color="#8A6536" style={styles.icon} />
+                                <Icon name="clock-o" size={20} color="#26294D" style={styles.icon} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartTimePicker(false);
@@ -304,7 +295,7 @@ const AddEvent = ({navigation}: any) => {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Icon name="map-marker" size={28} color="#8A6536" style={styles.icon} />
+                        <Icon name="map-marker" size={28} color="#26294D" style={styles.icon} />
                         <View style={{flex:1}}>
                             <GooglePlacesAutocomplete
                             placeholder="Add location"
@@ -393,7 +384,7 @@ const AddEvent = ({navigation}: any) => {
                                 {selectedImage && !defaultImages.some(image => image.uri === selectedImage.uri) ? (
                                     <Image source={selectedImage} style={styles.selectedImage}/>
                                 ) : (
-                                    <Text>Tap to Upload</Text>
+                                    <Text style={{color: 'white'}}>Tap to Upload</Text>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -426,7 +417,8 @@ const AddEvent = ({navigation}: any) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 15
+        padding: 15,
+        backgroundColor: '#fdf1f0'
     },
     header: {
         flexDirection: 'row',
@@ -438,7 +430,7 @@ const styles = StyleSheet.create({
         color: 'black'
     },
     title: {
-        color: '#C7A06D',
+        color: '#26294D',
         fontWeight: '400',
         fontSize: 25
     },
@@ -501,7 +493,7 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 10,
-        backgroundColor: '#C7A06D',
+        backgroundColor: '#26294D',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,

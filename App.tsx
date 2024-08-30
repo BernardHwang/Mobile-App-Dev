@@ -30,7 +30,7 @@ const App = () => {
 
             return <Icon name={iconName} color={color} size={size} />;
           },
-          tabBarActiveTintColor: '#8A6536',  // Active icon and label color
+          tabBarActiveTintColor: '#3e2769',  // Active icon and label color
           tabBarInactiveTintColor: '#B5B5B5',  // Inactive icon and label color
         })}
       >

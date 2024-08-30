@@ -138,11 +138,10 @@ const HomeScreen = ({ navigation }) => {
             name: 'create',
             text: 'Create an Event',
             icon: <Ionicons name='calendar-outline' color={'white'} size={20} />,
-            color: '#8A6536'
           }
         ]}
         buttonSize={50}
-        color='#8A6536'
+        color='#3e2769'
         onPressItem={() => 
           navigation.navigate('AddEvent')
         }
