@@ -1,10 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, {useState, useEffect, useContext} from 'react';
+import { View, Text, StyleSheet, Button, Image } from 'react-native';
+import { AuthContext } from '../navigation/AuthProvider';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({navigation, route}:any) => {
+  const {user, logout} =  useContext(AuthContext);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Profile Screen</Text>
+      <Text style={styles.text}>Welcome {user.email}</Text>
+      <Image source={{ uri: user.photoURL }} style={styles.profileImage} />
+      <Button title="Logout" onPress= {()=> logout()}/>
     </View>
   );
 };
@@ -17,6 +22,12 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
   },
 });
 
