@@ -7,9 +7,10 @@ const InputWithIconLabel = (props: any) => {
 
     return (
         <View style={[style.inputContainer, {flexDirection: orientationDirection}]}>
-            <Icon name={props.iconName} style={style.icon} {...props}/>
+            <Icon name={props.iconName} style={style.icon} color={'#26294D'} {...props}/>
             <TextInput
                 style={style.input}
+                placeholderTextColor="#999"
                 {...props}
             />
         </View>
