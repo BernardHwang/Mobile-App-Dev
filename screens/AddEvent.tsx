@@ -8,8 +8,10 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
+import { getDBConnection, createEvent } from '../db-services';
+import uuid from 'react-native-uuid';
 
-const AddEvent = ({navigation}: any) => {
+const AddEvent = ({route, navigation}: any) => {
     const [eventTitle, setTitle] = useState<string>('');
     const [startDate, setStartDate] = useState<Date|null>(null);
     const [endDate, setEndDate] = useState<Date|null>(null);
@@ -98,34 +100,6 @@ const AddEvent = ({navigation}: any) => {
         combined.setMilliseconds(time.getMilliseconds());
         return combined;
     };
-
-    const getNextEventId = async () => {
-        const counterRef = firestore().collection('counters').doc('eventCounter');
-    
-        try {
-            const newId = await firestore().runTransaction(async (transaction) => {
-                const counterDoc = await transaction.get(counterRef);
-    
-                if (!counterDoc.exists) {
-                    // If the document doesn't exist, initialize it with count = 0
-                    transaction.set(counterRef, { count: 0 });
-                    return 'E1'; // The first event ID
-                }
-    
-                const currentCount = counterDoc.data().count || 0;
-                const newCount = currentCount + 1;
-    
-                transaction.update(counterRef, { count: newCount });
-    
-                return 'E' + newCount;
-            });
-    
-            return newId;
-        } catch (error) {
-            console.error("Transaction failed: ", error);
-            throw error;
-        }
-    };
     
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -171,10 +145,11 @@ const AddEvent = ({navigation}: any) => {
         return true;
     };
 
-    const addEvent = async () => {
+    // Insert event record into firestore or SQLite database
+    const addEvent = async (isOnline: boolean) => {
         if (await handleSubmit()){
-            
             try {
+        
                 let imageUrl = '';
                 if (selectedImage && selectedImage.uri && typeof selectedImage.uri === 'string') {
                     if (selectedImage.uri.startsWith('file://')) {
@@ -186,30 +161,86 @@ const AddEvent = ({navigation}: any) => {
                     imageUrl = selectedImage.url;
                 }
 
-                const newDocId = await getNextEventId();
+                const eventID = uuid.v4().toString();
         
+                // Prepare event data object
                 const eventData = {
-                    name: eventTitle,
+                    id: eventID,
+                    title: eventTitle,
                     startDate: combineDateAndTime(startDate, startTime),
                     endDate: combineDateAndTime(endDate, endTime),
                     location: location,
                     guest: guest,
                     description: desc,
                     seats: seat,
-                    image: imageUrl
+                    image: imageUrl,
+                    hostID: route.params.userID
                 };
         
-                await firestore().collection('events').doc(newDocId).set(eventData);
+                // Insert data into SQLite (always done for offline support)
+                const db = await getDBConnection();
+                await createEvent(db, eventData.id, eventData.title, eventData.startDate, eventData.endDate, eventData.location, eventData.guest, eventData.description, eventData.seats, eventData.image, eventData.hostID);
         
+                // If online, also sync to Firestore
+                if (isOnline) {
+                    await firestore().collection('events').doc(eventID).set(eventData);
+                    console.log(`Event created in Firestore with ID: ${eventID}`);
+                }
+        
+                // Navigate to the saved screen
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Saved' }],
                 });
+        
             } catch (error) {
-                console.error("Error adding event: ", error);
+                console.error('Error creating event:', error);
+                Alert.alert('Error', 'An error occurred while saving the event. Please try again.');
             }
         }
     };
+
+    // insert data to firestore
+    // const createEventInFirestore = async () => {
+    //     if (await handleSubmit()){
+            
+    //         try {
+    //             let imageUrl = '';
+    //             if (selectedImage && selectedImage.uri && typeof selectedImage.uri === 'string') {
+    //                 if (selectedImage.uri.startsWith('file://')) {
+    //                     imageUrl = await uploadImageToStorage(selectedImage.uri);
+    //                 } else {
+    //                     imageUrl = selectedImage.url;
+    //                 }
+    //             } else if (selectedImage && selectedImage.url) {
+    //                 imageUrl = selectedImage.url;
+    //             }
+
+    //             const eventID = uuidv4();
+        
+    //             const eventData = {
+    //                 name: eventTitle,
+    //                 startDate: combineDateAndTime(startDate, startTime),
+    //                 endDate: combineDateAndTime(endDate, endTime),
+    //                 location: location,
+    //                 guest: guest,
+    //                 description: desc,
+    //                 seats: seat,
+    //                 image: imageUrl,
+    //                 hostID: route.params.userID
+    //             };
+        
+    //             await firestore().collection('events').doc(eventID).set(eventData);
+        
+    //             navigation.reset({
+    //                 index: 0,
+    //                 routes: [{ name: 'Saved' }],
+    //             });
+    //         } catch (error) {
+    //             console.error("Error adding event: ", error);
+    //         }
+    //     }
+    // };
 
     return (
             <ScrollView keyboardShouldPersistTaps='always'>
@@ -219,7 +250,7 @@ const AddEvent = ({navigation}: any) => {
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>New Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={addEvent}>
+                        <TouchableOpacity style={styles.saveBtn} onPress={()=>{addEvent(false)}}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>

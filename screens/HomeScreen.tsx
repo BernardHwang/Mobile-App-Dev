@@ -5,8 +5,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
+import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from '../db-services';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation }:any) => {
   // Initialize selectedDay as a moment object
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
@@ -15,6 +16,21 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     fetchEventsForSelectedDay(selectedDay);
   }, [selectedDay]);
+
+  const _createTable = async() => {
+    await createUsersTable(await getDBConnection());
+    await createEventsTable(await getDBConnection());
+    await createEventsParticipantsTable(await getDBConnection());
+  }
+
+  const _query = async() => {
+    setEvents(await getEvents(await getDBConnection()));
+  }
+
+  useEffect(()=>{
+    _createTable();
+    _query();
+  },[])
 
   const selectDay = () => {
     setModalVisible(!modalVisible);
@@ -146,7 +162,7 @@ const HomeScreen = ({ navigation }) => {
         buttonSize={50}
         color='#3e2769'
         onPressItem={() => 
-          navigation.navigate('AddEvent')
+          navigation.navigate('AddEvent',{userID: userID})
         }
         overrideWithAction={true}
       />
