@@ -65,7 +65,7 @@ export const createEventsParticipantsTable = async(db: SQLiteDatabase) => {
         const query = `CREATE TABLE IF NOT EXISTS events_participants(
                             event_id TEXT NOT NULL,
                             participant_id TEXT NOT NULL,
-                            PRIMARY KEY (event_id, participant_id)
+                            PRIMARY KEY (event_id, participant_id),
                             FOREIGN KEY (event_id) REFERENCES events(event_id),
                             FOREIGN KEY (participant_id) REFERENCES users(user_id)
                         )`;
@@ -171,7 +171,11 @@ export const getUsersByID = async(db: SQLiteDatabase, user_id: string): Promise<
     try{
         const query = `SELECT * FROM users WHERE user_id=?`;
         const results = await db.executeSql(query, [user_id]);
-        return results[0].rows.item(0)
+        if (results[0].rows.length > 0) {
+            return results[0].rows.item(0);
+        } else {
+            throw new Error("No user found with the given ID");
+        }
     }catch(error){
         console.error(error);
         throw Error('Failed to get users');
@@ -195,3 +199,150 @@ export const getEventsParticipantsByEventID = async(db: SQLiteDatabase, event_id
         throw Error('Failed to get events and their participants');
     }
 }
+
+//Create user
+export const createUser = async(
+    db: SQLiteDatabase, 
+    user_id: string,
+    name: string,
+    phone: string,
+    email: string,
+    password: string) => {
+        try{
+            const profile_pic = 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/default_pfp.jpg?alt=media&token=643b0bba-8a1a-405a-82cf-16111c4fc147';
+            const query = 'INSERT INTO users(user_id,name,profile_pic,phone,email,password) VALUES (?,?,?,?,?,?)';
+            const parameters = [user_id,name,profile_pic,phone,email,password];
+            await db.executeSql(query, parameters);
+            console.log("User created successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to create user =(');
+        }
+    }
+
+//Create event
+export const createEvent = async(
+    db: SQLiteDatabase,
+    eventID: string,
+    name: string,
+    startDate: Date,
+    endDate: Date,
+    location: string,
+    guest: string,
+    description: string,
+    seats: number,
+    image: string,
+    hostID: string) => {
+        try{
+            const query = 'INSERT INTO events(event_id,name,description,start_date,end_date,location,seats,guest,image,host_id) VALUES (?,?,?,?,?,?,?,?,?,?)';
+            const parameters = [eventID,name,description,startDate.toISOString(),endDate.toISOString(),location,seats,guest,image,hostID];
+            await db.executeSql(query, parameters);
+            console.log("Event created successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to create event =(');
+        }
+    }
+
+//Join event, add participant to the event
+export const createEventsParticipants = async(
+    db: SQLiteDatabase,
+    eventID: string,
+    participantID: string) => {
+        try{
+            const query = 'INSERT INTO events_participants(event_id, participant_id) VALUES (?,?)';
+            const parameters = [eventID, participantID];
+            await db.executeSql(query,parameters);
+            console.log("Participant is added to the event successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to add participant to event')
+        }
+}
+
+//Update user profile
+export const updateUser = async(
+    db: SQLiteDatabase, 
+    user_id: string,
+    name: string,
+    profile_pic: string,
+    phone: string,
+    email: string,
+    password: string) => {
+        try{
+            const query = 'UPDATE users SET name=?, profile_pic=?,phone=?,email=?,password=? WHERE user_id=?';
+            const parameters = [name,profile_pic,phone,email,password,user_id];
+            await db.executeSql(query, parameters);
+            console.log("User updated successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to create user =(');
+        }
+    }
+
+//Update event
+export const editEvent = async(
+    db: SQLiteDatabase, 
+    eventID: string,
+    name: string,
+    startDate: Date,
+    endDate: Date,
+    location: string,
+    guest: string,
+    description: string,
+    seats: number,
+    image: string) => {
+        try{
+            const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=?,image=? WHERE event_id=?';
+            const parameters = [name,description,startDate.toISOString(),endDate.toISOString(),location,guest,seats,image,eventID];
+            await db.executeSql(query, parameters);
+            console.log("Event updated successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to create event =(');
+        }
+    }
+
+//Delete user account
+export const deleteUser = async(
+    db: SQLiteDatabase,
+    userID: string) => {
+        try{
+            const query = 'DELETE FROM users WHERE user_id=?';
+            await db.executeSql(query,[userID]);
+            console.log("Delete user successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to delete user');
+        }
+    }
+
+//Cancel host event
+export const cancelEvent = async(
+    db: SQLiteDatabase,
+    eventID: string) => {
+        try{
+            const query = 'DELETE FROM events WHERE event_id=?';
+            await db.executeSql(query,[eventID]);
+            console.log("Cancel event successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to cancel event');
+        }
+    }
+
+//Unjoin event
+export const unjoinEvent = async(
+    db: SQLiteDatabase,
+    participantID: string,
+    eventID: string) => {
+        try{
+            const query = 'DELETE FROM events_participants WHERE event_id=? and participant_id=?';
+            const parameters = [eventID, participantID];
+            await db.executeSql(query,parameters);
+            console.log("Unjoin event successfully");
+        }catch(error){
+            console.error(error);
+            throw Error('Failed to unjoin event');
+        }
+    }
