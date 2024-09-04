@@ -8,8 +8,7 @@ import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplet
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
-import { getDBConnection, createEvent } from '../db-services';
-import uuid from 'react-native-uuid';
+import { createEvent } from '../firestore-service';
 
 const AddEvent = ({route, navigation}: any) => {
     const [eventTitle, setTitle] = useState<string>('');
@@ -90,7 +89,34 @@ const AddEvent = ({route, navigation}: any) => {
             }
         }
     };
+
+    const getNextEventId = async () => {
+        const counterRef = firestore().collection('counters').doc('eventCounter');
     
+        try {
+            const newId = await firestore().runTransaction(async (transaction) => {
+                const counterDoc = await transaction.get(counterRef);
+    
+                if (!counterDoc.exists) {
+                    // If the document doesn't exist, initialize it with count = 0
+                    transaction.set(counterRef, { count: 0 });
+                    return 'E1'; // The first event ID
+                }
+    
+                const currentCount = counterDoc.data().count || 0;
+                const newCount = currentCount + 1;
+    
+                transaction.update(counterRef, { count: newCount });
+    
+                return 'E' + newCount;
+            });
+    
+            return newId;
+        } catch (error) {
+            console.error("Transaction failed: ", error);
+            throw error;
+        }
+    };
 
     const combineDateAndTime = (date: Date, time: Date): Date => {
         const combined = new Date(date);
@@ -146,7 +172,7 @@ const AddEvent = ({route, navigation}: any) => {
     };
 
     // Insert event record into firestore or SQLite database
-    const addEvent = async (isOnline: boolean) => {
+    const addEvent = async () => {
         if (await handleSubmit()){
             try {
         
@@ -161,7 +187,7 @@ const AddEvent = ({route, navigation}: any) => {
                     imageUrl = selectedImage.url;
                 }
 
-                const eventID = uuid.v4().toString();
+                const eventID = await getNextEventId();
         
                 // Prepare event data object
                 const eventData = {
@@ -176,17 +202,9 @@ const AddEvent = ({route, navigation}: any) => {
                     image: imageUrl,
                     hostID: route.params.userID
                 };
-        
-                // Insert data into SQLite (always done for offline support)
-                const db = await getDBConnection();
-                await createEvent(db, eventData.id, eventData.title, eventData.startDate, eventData.endDate, eventData.location, eventData.guest, eventData.description, eventData.seats, eventData.image, eventData.hostID);
-        
-                // If online, also sync to Firestore
-                if (isOnline) {
-                    await firestore().collection('events').doc(eventID).set(eventData);
-                    console.log(`Event created in Firestore with ID: ${eventID}`);
-                }
-        
+                
+                await createEvent(eventData);
+                
                 // Navigate to the saved screen
                 navigation.reset({
                     index: 0,
@@ -200,48 +218,6 @@ const AddEvent = ({route, navigation}: any) => {
         }
     };
 
-    // insert data to firestore
-    // const createEventInFirestore = async () => {
-    //     if (await handleSubmit()){
-            
-    //         try {
-    //             let imageUrl = '';
-    //             if (selectedImage && selectedImage.uri && typeof selectedImage.uri === 'string') {
-    //                 if (selectedImage.uri.startsWith('file://')) {
-    //                     imageUrl = await uploadImageToStorage(selectedImage.uri);
-    //                 } else {
-    //                     imageUrl = selectedImage.url;
-    //                 }
-    //             } else if (selectedImage && selectedImage.url) {
-    //                 imageUrl = selectedImage.url;
-    //             }
-
-    //             const eventID = uuidv4();
-        
-    //             const eventData = {
-    //                 name: eventTitle,
-    //                 startDate: combineDateAndTime(startDate, startTime),
-    //                 endDate: combineDateAndTime(endDate, endTime),
-    //                 location: location,
-    //                 guest: guest,
-    //                 description: desc,
-    //                 seats: seat,
-    //                 image: imageUrl,
-    //                 hostID: route.params.userID
-    //             };
-        
-    //             await firestore().collection('events').doc(eventID).set(eventData);
-        
-    //             navigation.reset({
-    //                 index: 0,
-    //                 routes: [{ name: 'Saved' }],
-    //             });
-    //         } catch (error) {
-    //             console.error("Error adding event: ", error);
-    //         }
-    //     }
-    // };
-
     return (
             <ScrollView keyboardShouldPersistTaps='always'>
                 <View style={styles.container}>
@@ -250,7 +226,7 @@ const AddEvent = ({route, navigation}: any) => {
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>New Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={()=>{addEvent(false)}}>
+                        <TouchableOpacity style={styles.saveBtn} onPress={()=>{addEvent()}}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>

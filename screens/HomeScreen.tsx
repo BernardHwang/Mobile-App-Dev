@@ -6,6 +6,7 @@ import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
 import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from '../db-services';
+import { syncEventsData, syncEventsParticipantsData } from '../firestore-service';
 
 const HomeScreen = ({ navigation }:any) => {
   // Initialize selectedDay as a moment object
@@ -24,6 +25,8 @@ const HomeScreen = ({ navigation }:any) => {
   }
 
   const _query = async() => {
+    await syncEventsData(await getDBConnection());
+    await syncEventsParticipantsData(await getDBConnection());
     setEvents(await getEvents(await getDBConnection()));
   }
 
