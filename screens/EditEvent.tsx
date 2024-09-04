@@ -186,8 +186,8 @@ const EditEvent = ({navigation, route}: any) => {
                         <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.goBack()}}>
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
-                        <Text style={styles.title}>New Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={editEvent(route.params.id)}>
+                        <Text style={styles.title}>Edit Event</Text>
+                        <TouchableOpacity style={styles.saveBtn} onPress={() => editEvent(route.params.id)}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>
