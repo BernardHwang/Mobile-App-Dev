@@ -77,28 +77,22 @@ export const createEventsParticipantsTable = async(db: SQLiteDatabase) => {
     }
 }
 
-export const createEvent = async(
-    db: SQLiteDatabase, 
-    eventID: string,
-    name: string,
-    startDate: Date,
-    endDate: Date,
-    location: string,
-    guest: string,
-    description: string,
-    seats: number,
-    image: string,
-    hostID: string) => {
-        try{
-            const query = 'INSERT INTO events(event_id,name,description,start_date,end_date,location,seats,guest,image,host_id) VALUES (?,?,?,?,?,?,?,?,?,?)';
-            const parameters = [eventID,name,description,startDate.toISOString(),endDate.toISOString(),location,seats,guest,image,hostID];
-            await db.executeSql(query, parameters);
-            console.log("Event created successfully");
-        }catch(error){
-            console.error(error);
-            throw Error('Failed to create event =(');
-        }
+export const getUsers = async(db: SQLiteDatabase): Promise<any> => {
+    try{
+        const usersData: any = [];
+        const query =  `SELECT * FROM users`;
+        const results = await db.executeSql(query);
+        results.forEach(result=> {
+            (result.rows.raw()).forEach((item:any)=>{
+                usersData.push(item);
+            })
+        });
+        return usersData;
+    }catch(error){
+        console.error(error);
+        throw Error('Failed to get users');
     }
+}
 
 export const getEvents = async(db: SQLiteDatabase): Promise<any> => {
     try{
@@ -117,6 +111,7 @@ export const getEvents = async(db: SQLiteDatabase): Promise<any> => {
     }
 }
 
+// Show in 'Home' screen to display the events happen in that day
 export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any> => {
     try{
         const eventsData: any = [];
@@ -135,6 +130,7 @@ export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any
     }
 }
 
+// Show in 'Hosted event' screen
 export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];
@@ -152,6 +148,7 @@ export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): 
     }
 }
 
+// Show in 'Joined event' screen
 export const getJoinEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];
@@ -169,23 +166,32 @@ export const getJoinEventsByUserID = async(db: SQLiteDatabase,user_id: string): 
     }
 }
 
-export const editEvent = async(
-        db: SQLiteDatabase, 
-        eventID: string,
-        name: string,
-        startDate: Date,
-        endDate: Date,
-        location: string,
-        guest: string,
-        description: string,
-        seats: number,
-        image: string) => {
-            try{
-                const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=?,image=? WHERE event_id=?';
-                const parameters = [name,description,startDate,endDate,location,guest,seats,image,eventID];
-                await db.executeSql(query, parameters);
-            }catch(error){
-                console.error(error);
-                throw Error('Failed to create event =(');
-            }
-        }
+// User view their own profile details
+export const getUsersByID = async(db: SQLiteDatabase, user_id: string): Promise<any> => {
+    try{
+        const query = `SELECT * FROM users WHERE user_id=?`;
+        const results = await db.executeSql(query, [user_id]);
+        return results[0].rows.item(0)
+    }catch(error){
+        console.error(error);
+        throw Error('Failed to get users');
+    }
+}
+
+// Host can see details of the participants for an event
+export const getEventsParticipantsByEventID = async(db: SQLiteDatabase, event_id: string): Promise<any> => {
+    try{
+        const eventsParticipantsData:any = [];
+        const query = `SELECT * FROM events_participants WHERE event_id=?`;
+        const results = await db.executeSql(query, [event_id]);
+        results.forEach(result => {
+            (result.rows.raw()).forEach((item:any)=>{
+                eventsParticipantsData.push(item);
+            })
+        });
+        return eventsParticipantsData;
+    }catch(error){
+        console.error(error);
+        throw Error('Failed to get events and their participants');
+    }
+}
