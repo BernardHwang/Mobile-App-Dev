@@ -1,25 +1,44 @@
-import { View, Text } from 'react-native';
-import React from 'react';
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import LoginScreen from "./screens/Login";
-import Login from './screens/Login';
+import React, { useContext, useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import auth from "@react-native-firebase/auth";
+import { AuthProvider } from "./navigation/AuthProvider";
+import { AuthContext } from './navigation/AuthProvider';
+import AuthStack from './navigation/AuthStack';
+import AppStack from './navigation/AppStack';
 
-const Stack = createStackNavigator();
+const Routes = () => {
 
-const App = () => {
+  const { user, setUser } = useContext(AuthContext);
+  const [initializing, setInitializing] = useState(true);
+
+  const handleAuthStateChanged = (user:any) => {
+    setUser(user);
+    console.log(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(handleAuthStateChanged);
+    return subscriber; // unsubscribe on mount
+  }, []);
+
+  //TODO: consider whether to implement or delete
+  //if (initializing) return null;
+
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="login">
-        <Stack.Screen
-          name = "login"
-          component = {LoginScreen}
-          options = {{headerTitle: "Login"}}
-        />
-      </Stack.Navigator>
+      {user ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
-  )
+  );
 }
 
-export default App
+const App = () => {
+
+  return (
+    <AuthProvider>
+      <Routes />
+    </AuthProvider>
+  );
+}
+
+export default App;

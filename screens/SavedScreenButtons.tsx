@@ -57,7 +57,7 @@ const SavedScreenButtons = ({buttons,selectedTab,setSelectedTab, tabPositionX}: 
             <Animated.View
                 style={[animatedStyle,{
                     position: 'absolute', 
-                    backgroundColor: 'violet', 
+                    backgroundColor: 'B9A1E4', 
                     borderRadius: 10, 
                     marginHorizontal: 10,
                     height: dimensions.height,
@@ -66,7 +66,7 @@ const SavedScreenButtons = ({buttons,selectedTab,setSelectedTab, tabPositionX}: 
             />
             <View onLayout={onTabbarLayout} style={{flexDirection:'row'}}>
                 {buttons.map((button, index)=>{
-                    const color = selectedTab === index ? 'white' : 'violet';
+                    const color = selectedTab === index ? 'white' : 'B9A1E4';
                     return(
                         <Pressable 
                             key={index} 

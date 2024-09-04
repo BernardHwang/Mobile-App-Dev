@@ -69,7 +69,10 @@ const HomeScreen = ({ navigation }:any) => {
   
 
   const renderEventItem = ({ item }) => (
-    <View style={styles.eventCard}>
+    <TouchableOpacity 
+      style={styles.eventCard}
+      onPress={()=>navigation.navigate('EventDetails', { event: item })}
+    >
       {item.image ? (
         <Image 
           source={{ uri: item.image }} 
@@ -83,7 +86,7 @@ const HomeScreen = ({ navigation }:any) => {
       )}
       <Text style={styles.eventTitle}>{item.name}</Text>
       <Text style={styles.eventTime}>{item.time}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const handleDateChange = (date) => {

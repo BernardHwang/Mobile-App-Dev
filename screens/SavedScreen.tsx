@@ -65,7 +65,7 @@ const SavedScreen = () => {
     },
     text: {
       fontSize: 18,
-      color: 'violet',
+      color: 'B9A1E4',
     },
   });
 
