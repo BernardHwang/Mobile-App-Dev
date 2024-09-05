@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -7,8 +7,10 @@ import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
 import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from '../db-services';
 import { syncEventsData, syncEventsParticipantsData } from '../firestore-service';
+import { AuthContext } from '../navigation/AuthProvider';
 
 const HomeScreen = ({ navigation }:any) => {
+  const { user, logout } = useContext(AuthContext);
   // Initialize selectedDay as a moment object
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
@@ -18,22 +20,12 @@ const HomeScreen = ({ navigation }:any) => {
     fetchEventsForSelectedDay(selectedDay);
   }, [selectedDay]);
 
-  const _createTable = async() => {
-    await createUsersTable(await getDBConnection());
-    await createEventsTable(await getDBConnection());
-    await createEventsParticipantsTable(await getDBConnection());
-  }
 
-  const _query = async() => {
+ /* const _query = async() => {
     await syncEventsData(await getDBConnection());
     await syncEventsParticipantsData(await getDBConnection());
     setEvents(await getEvents(await getDBConnection()));
-  }
-
-  useEffect(()=>{
-    _createTable();
-    _query();
-  },[])
+  }*/
 
   const selectDay = () => {
     setModalVisible(!modalVisible);
@@ -43,13 +35,13 @@ const HomeScreen = ({ navigation }:any) => {
     try {
       const eventsRef = firestore().collection('events');
       const querySnapshot = await eventsRef.get();
-  
+
       const fetchedEvents = querySnapshot.docs
         .map((doc) => {
           const data = doc.data();
           const eventStartDate = moment(data.startDate.toDate()).local(); // Start date in local time
           const eventEndDate = moment(data.endDate.toDate()).local(); // End date in local time
-          
+
           return {
             id: doc.id,
             name: data.name,
@@ -63,23 +55,23 @@ const HomeScreen = ({ navigation }:any) => {
         })
         .filter((event) => event.startDate.isSameOrBefore(day, 'day') && event.endDate.isSameOrAfter(day, 'day')) // Filter by date range
         .sort((a, b) => moment(a.time, 'HH:mm').diff(moment(b.time, 'HH:mm')));
-  
+
       setEvents(fetchedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
   };
-  
+
 
   const renderEventItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.eventCard}
       onPress={()=>navigation.navigate('EventDetails', { event: item })}
     >
       {item.image ? (
-        <Image 
-          source={{ uri: item.image }} 
-          style={styles.eventImage} 
+        <Image
+          source={{ uri: item.image }}
+          style={styles.eventImage}
           resizeMode="cover"
         />
       ) : (
@@ -101,10 +93,10 @@ const HomeScreen = ({ navigation }:any) => {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
         <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
-        <Ionicons 
-          name='notifications-outline' 
-          size={25} 
-          color='black' 
+        <Ionicons
+          name='notifications-outline'
+          size={25}
+          color='black'
           style={{ marginTop: 10 }}
           onPress={() => navigation.navigate('Notification')}
         />
@@ -154,7 +146,7 @@ const HomeScreen = ({ navigation }:any) => {
         keyExtractor={(item) => item.id}
         ListEmptyComponent={<Text style={styles.noEventsText}>No events today</Text>}
       />
-      <FloatingAction 
+      <FloatingAction
         actions={[
           {
             name: 'create',
@@ -164,8 +156,8 @@ const HomeScreen = ({ navigation }:any) => {
         ]}
         buttonSize={50}
         color='#3e2769'
-        onPressItem={() => 
-          navigation.navigate('AddEvent',{userID: userID})
+        onPressItem={() =>
+          navigation.navigate('AddEvent',{userID: user.uid})
         }
         overrideWithAction={true}
       />
