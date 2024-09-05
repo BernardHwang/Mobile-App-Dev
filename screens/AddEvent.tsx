@@ -2,13 +2,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
-import { createEvent } from '../firestore-service';
+import { createEventOnline } from '../firestore-service';
+import { createEventLocally, getDBConnection } from '../db-services';
+import { checkInternetConnection } from '../sync';
 
 const AddEvent = ({route, navigation}: any) => {
     const [eventTitle, setTitle] = useState<string>('');
@@ -24,7 +26,7 @@ const AddEvent = ({route, navigation}: any) => {
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
-
+    const [isOnline, setIsOnline] = useState<boolean>(true);
     const defaultImages = [
         {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
         {uri: require('../images/eventImg2.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg2.jpg?alt=media&token=162760ed-dca8-474d-b267-28179d6bb833'},
@@ -32,6 +34,22 @@ const AddEvent = ({route, navigation}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
+
+    const checkConnection = async () => {
+        const connected = await checkInternetConnection();
+        setIsOnline(!!connected);
+        if (!connected) {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. You cannot create or update events while offline.',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+        }
+    };
+
+    useEffect(()=>{
+        checkConnection();
+    },[navigation])
 
     const handleChoosePhoto = () => {
         launchImageLibrary(
@@ -191,29 +209,27 @@ const AddEvent = ({route, navigation}: any) => {
         
                 // Prepare event data object
                 const eventData = {
-                    id: eventID,
-                    title: eventTitle,
-                    startDate: combineDateAndTime(startDate, startTime),
-                    endDate: combineDateAndTime(endDate, endTime),
+                    event_id: eventID,
+                    name: eventTitle,
+                    start_date: combineDateAndTime(startDate, startTime).toISOString(),
+                    end_date: combineDateAndTime(endDate, endTime).toISOString(),
                     location: location,
                     guest: guest,
                     description: desc,
                     seats: seat,
                     image: imageUrl,
-                    hostID: route.params.userID
+                    host_id: route.params.userID
                 };
                 
-                await createEvent(eventData);
-                
-                // Navigate to the saved screen
+                await createEventOnline(eventData);
+                await createEventLocally(await getDBConnection(), eventData);
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Saved' }],
                 });
-        
             } catch (error) {
                 console.error('Error creating event:', error);
-                Alert.alert('Error', 'An error occurred while saving the event. Please try again.');
+                Alert.alert('Error', 'An error occurred while creating the event. Please try again.');
             }
         }
     };
@@ -313,7 +329,7 @@ const AddEvent = ({route, navigation}: any) => {
                                 }
                             }}
                             query={{
-                                key: 'AIzaSyDfYC_0IwQ1K2Ua07Ix1vYMaSP-eafAmbw',
+                                key: 'AIzaSyDfYC_0IwQ1K2Ua07Ix1vYMaSP-eafAmbw', //Google Map API key
                                 language: 'en',
                             }}
                             styles={{

@@ -13,8 +13,8 @@ export interface User {
     event_id: string; 
     name: string;
     description: string;
-    start_date: FirebaseFirestoreTypes.Timestamp; 
-    end_date: FirebaseFirestoreTypes.Timestamp; 
+    start_date: string; 
+    end_date: string; 
     location: string;
     seats: number;
     guest: string;
