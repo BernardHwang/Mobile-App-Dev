@@ -74,18 +74,17 @@ export const getEventsParticipantsByEventID = async (event_id: string): Promise<
 export const createEventOnline = async (eventData: Event) => {
   try {
     const eventDataFirestore = {
-        event_id:eventData.event_id,
         name: eventData.name,
         description: eventData.description,
-        start_date: FirebaseFirestoreTypes.Timestamp.fromDate(new Date(eventData.start_date)), 
-        end_date: FirebaseFirestoreTypes.Timestamp.fromDate(new Date(eventData.end_date)),      
+        start_date: firestore.Timestamp.fromDate(new Date(eventData.start_date)), 
+        end_date: firestore.Timestamp.fromDate(new Date(eventData.end_date)),    
         location: eventData.location,
         seats: eventData.seats,
         guest: eventData.guest,
         image: eventData.image,
         host_id: eventData.host_id
     }
-    await firestore().collection('events').add(eventDataFirestore);
+    await firestore().collection('events').doc(eventData.event_id).set(eventDataFirestore);
     console.log('Event added successfully in Firestore!');
   } catch (error) {
     console.error('Error adding event: ', error);
@@ -98,8 +97,8 @@ export const updateEventOnline = async(eventData: Event) => {
     const eventDataFirestore = {
         name: updateData.name,
         description: updateData.description,
-        start_date: FirebaseFirestoreTypes.Timestamp.fromDate(new Date(updateData.start_date)), 
-        end_date: FirebaseFirestoreTypes.Timestamp.fromDate(new Date(updateData.end_date)),      
+        start_date: firestore.Timestamp.fromDate(new Date(updateData.start_date)), 
+        end_date: firestore.Timestamp.fromDate(new Date(updateData.end_date)),      
         location: updateData.location,
         seats: updateData.seats,
         guest: updateData.guest,

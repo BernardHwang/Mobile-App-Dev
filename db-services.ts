@@ -206,7 +206,7 @@ export const createEventLocally = async (
     db: SQLiteDatabase,
     event: Event) => {
     try {
-      const query = 'INSERT INTO events(event_id, name, description, start_date, end_date, location, seats, guest, image, host_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      const query = 'INSERT INTO events(event_id, name, description, start_date, end_date, location, seats, guest, image, host_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
       const parameters = [
         event.event_id,
         event.name,

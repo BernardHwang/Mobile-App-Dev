@@ -55,18 +55,14 @@ const AppStack = () => {
 
 const StackNav = () => {
     return(
-        <Stack.Navigator>
+        <Stack.Navigator screenOptions={{headerShown: false}}>
             <Stack.Screen
                 name="Home"
                 component={HomeScreen}
-                //delete the option
-                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
-                //delete the option
-                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="AddEvent"
