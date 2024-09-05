@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import auth from "@react-native-firebase/auth";
 import { AuthProvider } from "./navigation/AuthProvider";
 import { AuthContext } from './navigation/AuthProvider';
+import { SocketProvider } from './navigation/SocketProvider';
 import AuthStack from './navigation/AuthStack';
 import AppStack from './navigation/AppStack';
 import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from './db-services';
@@ -47,7 +48,9 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <Routes />
+      <SocketProvider>
+        <Routes />
+      </SocketProvider>
     </AuthProvider>
   );
 }
