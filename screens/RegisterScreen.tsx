@@ -59,7 +59,7 @@ const RegisterScreen = ({navigation, route}: any) => {
 
                 <AppButton
                     title="Register"
-                    onPress={()=>{register(email, password)}}
+                    onPress={()=>{register(email, password, name, phone)}}
                 />
             </KeyboardAvoidingView>
         </View>
