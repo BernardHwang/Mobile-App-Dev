@@ -5,8 +5,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
-import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from '../db-services';
-import { syncEventsData, syncEventsParticipantsData } from '../firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 
 const HomeScreen = ({ navigation }:any) => {
