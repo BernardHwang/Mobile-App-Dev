@@ -4,13 +4,14 @@ import auth from "@react-native-firebase/auth";
 import { AuthProvider } from "./navigation/AuthProvider";
 import { AuthContext } from './navigation/AuthProvider';
 import { SocketProvider } from './navigation/SocketProvider';
+import NotificationListener from './NoficationGenerator'
 import AuthStack from './navigation/AuthStack';
 import AppStack from './navigation/AppStack';
 import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from './db-services';
 import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './sync';
 
 const Routes = () => {
-
+  NotificationListener();
   const { user, setUser } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
 
@@ -42,12 +43,16 @@ const Routes = () => {
     _sync();
   }, []);
 
-  //TODO: consider whether to implement or delete
-  //if (initializing) return null;
-
   return (
     <NavigationContainer>
-      {user ? <AppStack /> : <AuthStack />}
+       {user ? (
+        <>
+          <NotificationListener />
+          <AppStack />
+        </>
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 }
