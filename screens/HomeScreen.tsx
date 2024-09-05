@@ -37,8 +37,8 @@ const HomeScreen = ({ navigation }:any) => {
       const fetchedEvents = querySnapshot.docs
         .map((doc) => {
           const data = doc.data();
-          const eventStartDate = moment(data.startDate.toDate()).local(); // Start date in local time
-          const eventEndDate = moment(data.endDate.toDate()).local(); // End date in local time
+          const eventStartDate = moment(data.start_date.toDate()).local(); // Start date in local time
+          const eventEndDate = moment(data.end_date.toDate()).local(); // End date in local time
 
           return {
             id: doc.id,
@@ -47,11 +47,11 @@ const HomeScreen = ({ navigation }:any) => {
             image: data.image,
             location: data.location,
             time: eventStartDate.format('HH:mm'), // Format time in local time
-            startDate: eventStartDate,
-            endDate: eventEndDate, // Keep the end date for comparison
+            start_date: eventStartDate,
+            end_date: eventEndDate, // Keep the end date for comparison
           };
         })
-        .filter((event) => event.startDate.isSameOrBefore(day, 'day') && event.endDate.isSameOrAfter(day, 'day')) // Filter by date range
+        .filter((event) => event.start_date.isSameOrBefore(day, 'day') && event.end_date.isSameOrAfter(day, 'day')) // Filter by date range
         .sort((a, b) => moment(a.time, 'HH:mm').diff(moment(b.time, 'HH:mm')));
 
       setEvents(fetchedEvents);
