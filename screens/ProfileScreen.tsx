@@ -8,27 +8,24 @@ const ProfileScreen = ({navigation, route}:any) => {
   const {user, logout} =  useContext(AuthContext);
 
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: "#fff"}}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{justifyContent: 'center', alignItems:'center'}}
-        showsVerticalScrollIndicator={false}
-      >
-        <Image style={styles.profileImage} source={{ uri: user.photoURL }}/>
+    <View style={styles.container}>
+        <Image style={styles.profileImage} source={{ uri: user.photoURL }} />
         <Text style={{}}>{user.displayName}</Text>
-
         <View>
-          <TouchableOpacity onPress={()=>{}}>
+          <TouchableOpacity onPress={() => { }}>
             <Text>Edit Profile</Text>
           </TouchableOpacity>
+          <Button title="Logout" onPress={() => logout()} />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   text: {
     fontSize: 18,
