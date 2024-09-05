@@ -12,7 +12,6 @@ import { createEventOnline } from '../firestore-service';
 import { createEventLocally, getDBConnection } from '../db-services';
 import { checkInternetConnection } from '../sync';
 import { AuthContext } from '../navigation/AuthProvider';
-import { SocketContext } from '../navigation/SocketProvider';
 
 const AddEvent = ({navigation}: any) => {
     const { user } = useContext(AuthContext);
