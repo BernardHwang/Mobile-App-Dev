@@ -25,10 +25,9 @@ export const createUsersTable = async(db: SQLiteDatabase) => {
         const query = `CREATE TABLE IF NOT EXISTS users (
                             user_id TEXT PRIMARY KEY, 
                             name TEXT NOT NULL,
-                            profile_pic TEXT,
+                            pfp TEXT,
                             phone TEXT,
-                            email TEXT NOT NULL UNIQUE,
-                            password TEXT NOT NULL
+                            email TEXT NOT NULL UNIQUE
                         )`;
         await db.executeSql(query);
         console.log('Table users created successful');

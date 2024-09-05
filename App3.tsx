@@ -7,11 +7,18 @@ import { SocketProvider } from './navigation/SocketProvider';
 import AuthStack from './navigation/AuthStack';
 import AppStack from './navigation/AppStack';
 import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from './db-services';
+import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './sync';
 
 const Routes = () => {
 
   const { user, setUser } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
+
+  const _sync = async() => {
+    await syncUsersData(await getDBConnection());
+    await syncEventsData(await getDBConnection());
+    await syncEventsParticipantsData(await getDBConnection());
+  }
 
   const handleAuthStateChanged = (user:any) => {
     setUser(user);
@@ -32,6 +39,7 @@ const Routes = () => {
 
   useEffect(() => {
     _createTable();
+    _sync();
   }, []);
 
   //TODO: consider whether to implement or delete

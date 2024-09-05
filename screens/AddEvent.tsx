@@ -174,9 +174,12 @@ const AddEvent = ({navigation}: any) => {
         }
     
         // Validate guest email
-        if (!validateEmail(guest.trim())) {
-            Alert.alert('Validation Error', 'Please enter a valid guest email.');
-            return;
+        if (guest.trim() != '') {
+            if (!validateEmail(guest.trim())){
+                Alert.alert('Validation Error', 'Please enter a valid guest email.');
+                return;
+            }
+            
         }
 
         // Check location

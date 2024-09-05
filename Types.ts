@@ -1,12 +1,9 @@
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-
 export interface User {
     user_id: string;
     name: string;
-    profile_pic: string;
+    pfp: string;
     phone: string;
     email: string;
-    password: string;
   }
   
   export interface Event {

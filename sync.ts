@@ -28,9 +28,9 @@ export const checkInternetConnection = async () => {
         // Insert or update users in SQLite
         for (const user of usersData) {
           await db.executeSql(
-            `INSERT OR REPLACE INTO users (user_id, name, profile_pic, phone, email, password)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [user.user_id, user.name, user.profile_pic, user.phone, user.email, user.password]
+            `INSERT OR REPLACE INTO users (user_id, name, pfp, phone, email)
+             VALUES (?, ?, ?, ?, ?)`,
+            [user.user_id, user.name, user.pfp, user.phone, user.email]
           );
         }
         console.log('Users data synced successfully');
