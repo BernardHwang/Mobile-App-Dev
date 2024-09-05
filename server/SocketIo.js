@@ -37,11 +37,12 @@ const getEventData = async (eventId) => {
     return eventDoc.data();
 };
 
-// Set up a listener for event creation and modification outside of the socket connection
+//Set up a listener for event creation and modification outside of the socket connection
 eventsCollectionRef.onSnapshot(async snapshot => {
     snapshot.docChanges().forEach(async (change) => {
         const eventData = change.doc.data();
-        const hostId = eventData.hostID;
+        const hostId = eventData.host_id;
+        const eventId = change.doc.id;
 
         const userData = await getUserData(hostId);
         if (!userData) return;
@@ -51,66 +52,71 @@ eventsCollectionRef.onSnapshot(async snapshot => {
 
         if (change.type === 'added') {
             notification = {
-                channelId: 'Notification',
                 title: 'Successfully Posted Event',
-                message: `Congratulations ${userData.name}, you have successfully posted the ${eventName}. You may check for the event details in the "Event" page.`
+                message: `Congratulations ${userData.name}, you have successfully posted the ${eventName}.`
             };
         } else if (change.type === 'modified') {
             notification = {
-                channelId: 'Notification',
                 title: 'Successfully Modified Event',
-                message: `The ${eventName}'s event details have been updated. Please check for the event details in the "Event" page.`
+                message: `The ${eventName}'s event details have been updated.`
             };
         } else if (change.type === 'removed') {
             notification = {
-                channelId: 'Notification',
                 title: 'Event Removed',
-                message: `The event ${eventName} has been successfully removed.`
+                message: `The event ${eventName} has been removed.`
             };
         }
-        
+
         // Emit the notification to all connected clients
         console.log(notification);
-        io.emit('createNotification', notification);
+        io.emit('eventNotification', { notification, userId: hostId });
     });
 });
 
-// Set up a global listener for participants in events
+//Set up a global listener for participants in events
 eventsCollectionRef.onSnapshot(async snapshot => {
     snapshot.docChanges().forEach(async (change) => {
         const eventId = change.doc.id;
-
-        // Listen for changes in participants of each event
         const eventParticipantsRef = eventsCollectionRef.doc(eventId).collection('participant');
-        
-        eventParticipantsRef.onSnapshot(async (participantSnapshot) => {
-            participantSnapshot.docChanges().forEach(async (participantChange) => {
-                const participantData = participantChange.doc.data();
-                const userData = await getUserData(participantData.userId);
-                const eventData = await getEventData(eventId);
 
-                if (!userData || !eventData) return;
+        try {
+            const participantSnapshot = await eventParticipantsRef.get();
+            // Ensure the participant subcollection exists
+            if (!participantSnapshot.empty) {
+                // Listen for real-time changes in the participant subcollection
+                eventParticipantsRef.onSnapshot(async (participantSnapshot) => {
+                    participantSnapshot.docChanges().forEach(async (participantChange) => {
+                        const participantData = participantChange.doc.data();
+                        const userId = participantData.userId;
 
-                let notification = {};
+                        const userData = await getUserData(userId);
+                        const eventData = await getEventData(eventId);
 
-                if (participantChange.type === 'added') {
-                    notification = {
-                        channelId: 'Notification',
-                        title: 'Successfully Joined Event',
-                        message: `Congratulations ${userData.name}, you have successfully joined the ${eventData.name}. Please check the event details on the "Event" page.`
-                    };
-                } else if (participantChange.type === 'removed') {
-                    notification = {
-                        channelId: 'Notification',
-                        title: 'Successfully Left Event',
-                        message: `You have successfully left the ${eventData.name}.`
-                    };
-                }
+                        if (!userData || !eventData) return;
 
-                // Emit or send the notification
-                io.emit('participationNotification', notification);
-            });
-        });
+                        let notification = {};
+
+                        if (participantChange.type === 'added') {
+                            notification = {
+                                title: 'Successfully Joined Event',
+                                message: `Congratulations ${userData.name}, you have joined the event: ${eventData.name}.`
+                            };
+                        } else if (participantChange.type === 'removed') {
+                            notification = {
+                                title: 'Left Event',
+                                message: `You have left the event: ${eventData.name}.`
+                            };
+                        }
+                        // Emit the notification for participation changes
+                        io.emit('participationNotification', { notification, userId });
+                    });
+                });
+            } else {
+                console.log(`No participants found for event ${eventId}`);
+            }
+        } catch (error) {
+            console.error(`Error accessing participants for event ${eventId}:`, error);
+        }
     });
 });
 

@@ -15,7 +15,6 @@ import { AuthContext } from '../navigation/AuthProvider';
 
 const AddEvent = ({navigation}: any) => {
     const { user } = useContext(AuthContext);
-    const { socket } = useContext(SocketContext);
     const [eventTitle, setTitle] = useState<string>('');
     const [startDate, setStartDate] = useState<Date|null>(null);
     const [endDate, setEndDate] = useState<Date|null>(null);
@@ -37,14 +36,6 @@ const AddEvent = ({navigation}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
-
-    const generateNotification = () => {
-        if (socket) {
-            socket.emit('eventCreation', { userId: user.uid }); // Ensure correct payload structure
-        } else {
-            console.error('Socket is not connected');
-        }
-    }
 
     const checkConnection = async () => {
         const connected = await checkInternetConnection();
@@ -256,7 +247,7 @@ const AddEvent = ({navigation}: any) => {
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>New Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={()=>{addEvent(), generateNotification()}}>
+                        <TouchableOpacity style={styles.saveBtn} onPress={()=>{addEvent()}}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>
