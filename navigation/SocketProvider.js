@@ -1,4 +1,3 @@
-// SocketProvider.js
 import React, { createContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 
@@ -9,7 +8,7 @@ const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // Initialize the socket connection
-    const socketInstance = io('http://172.20.10.5:3000'); // Use 'http' if your server isn't using HTTPS
+    const socketInstance = io('http://192.168.1.113:3000'); // Change to 'http://your-ip-address:300
     setSocket(socketInstance);
 
     // Log connection status
