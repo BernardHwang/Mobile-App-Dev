@@ -2,12 +2,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
+import { checkInternetConnection } from '../sync';
+import { updateEventOnline } from '../firestore-service';
+import { editEventLocally, getDBConnection } from '../db-services';
 
 const EditEvent = ({navigation, route}: any) => {
     const [eventTitle, setTitle] = useState<string>('');
@@ -23,7 +26,8 @@ const EditEvent = ({navigation, route}: any) => {
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
-
+    const [isOnline, setIsOnline] = useState<boolean>(true);
+    
     const defaultImages = [
         {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
         {uri: require('../images/eventImg2.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg2.jpg?alt=media&token=162760ed-dca8-474d-b267-28179d6bb833'},
@@ -31,6 +35,22 @@ const EditEvent = ({navigation, route}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
+
+    const checkConnection = async () => {
+        const connected = await checkInternetConnection();
+        setIsOnline(!!connected);
+        if (!connected) {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. You cannot create or update events while offline.',
+                [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+        }
+    };
+
+    useEffect(()=>{
+        checkConnection();
+    },[navigation])
 
     const handleChoosePhoto = () => {
         launchImageLibrary(
@@ -54,7 +74,7 @@ const EditEvent = ({navigation, route}: any) => {
         return downloadUrl;
     };
     
-    const handleDatePickerChange = (event: any, selectedDate?: Date) => {
+    const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
             if (isStartDatePicker) {
@@ -65,7 +85,7 @@ const EditEvent = ({navigation, route}: any) => {
         }
     };
 
-    const handleTimePickerChange = (event: any, selectedTime?: Date) => {
+    const handleTimePickerChange = (selectedTime?: Date) => {
         setShowTimePicker(false);
         if (selectedTime) {
             if (isStartTimePicker) {
@@ -160,21 +180,25 @@ const EditEvent = ({navigation, route}: any) => {
                 }
         
                 const eventData = {
+                    event_id: id,
                     name: eventTitle,
-                    startDate: combineDateAndTime(startDate, startTime),
-                    endDate: combineDateAndTime(endDate, endTime),
+                    start_date: combineDateAndTime(startDate, startTime).toISOString(),
+                    end_date: combineDateAndTime(endDate, endTime).toISOString(),
                     location: location,
                     guest: guest,
                     description: desc,
                     seats: seat,
-                    image: imageUrl
+                    image: imageUrl,
+                    host_id: 'user_id'
                 };
         
-                await firestore().collection('events').doc(id).set(eventData);
+                await updateEventOnline(eventData)
+                await editEventLocally(await getDBConnection(), eventData)
         
                 navigation.goback();
             } catch (error) {
                 console.error("Error adding event: ", error);
+                Alert.alert('Error', 'An error occurred while updating the event. Please try again.');
             }
         }
     };
