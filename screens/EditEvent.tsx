@@ -2,7 +2,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -11,8 +11,11 @@ import { InputWithIconLabel } from '../UI';
 import { checkInternetConnection } from '../sync';
 import { updateEventOnline } from '../firestore-service';
 import { editEventLocally, getDBConnection } from '../db-services';
+import { AuthContext } from '../navigation/AuthProvider';
 
 const EditEvent = ({navigation, route}: any) => {
+    const { user } = useContext(AuthContext);
+    //const { socket } = useContext(SocketContext);
     const [eventTitle, setTitle] = useState<string>('');
     const [startDate, setStartDate] = useState<Date|null>(null);
     const [endDate, setEndDate] = useState<Date|null>(null);
@@ -35,6 +38,14 @@ const EditEvent = ({navigation, route}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
+
+    const generateNotification = () => {
+        if (socket) {
+            socket.emit('eventCreation', { userId: user.uid }); // Ensure correct payload structure
+        } else {
+            console.error('Socket is not connected');
+        }
+    }
 
     const checkConnection = async () => {
         const connected = await checkInternetConnection();
@@ -189,7 +200,7 @@ const EditEvent = ({navigation, route}: any) => {
                     description: desc,
                     seats: seat,
                     image: imageUrl,
-                    host_id: 'user_id'
+                    host_id: user.uid
                 };
         
                 await updateEventOnline(eventData)
@@ -211,7 +222,7 @@ const EditEvent = ({navigation, route}: any) => {
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>Edit Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={() => editEvent(route.params.id)}>
+                        <TouchableOpacity style={styles.saveBtn} onPress={() => {editEvent(route.params.id), generateNotification()}}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>
