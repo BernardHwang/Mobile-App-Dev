@@ -11,7 +11,6 @@ import { createEventsParticipantsTable, createEventsTable, createUsersTable, get
 import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './sync';
 
 const Routes = () => {
-  NotificationListener();
   const { user, setUser } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
 
@@ -42,6 +41,9 @@ const Routes = () => {
     _createTable();
     _sync();
   }, []);
+
+  //TODO: consider whether to implement or delete
+  //if (initializing) return null;
 
   return (
     <NavigationContainer>
