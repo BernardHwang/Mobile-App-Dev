@@ -23,11 +23,14 @@
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.4.0",
     "@types/react-native-sqlite-storage": "^6.0.5",
+    "express": "^4.19.2",
     "firebase": "^10.13.1",
+    "firebase-admin": "^12.4.0",
     "moment": "^2.30.1",
     "react": "18.2.0",
     "react-native": "0.74.3",
     "react-native-calendars": "^1.1306.0",
+    "react-native-date-picker": "^5.0.7",
     "react-native-floating-action": "^1.22.0",
     "react-native-gesture-handler": "^2.17.1",
     "react-native-google-places-autocomplete": "^2.5.6",
@@ -41,6 +44,8 @@
     "react-native-sqlite-storage": "^6.0.1",
     "react-native-uuid": "^2.0.2",
     "react-native-vector-icons": "^10.1.0",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
     "uuid": "^10.0.0"
   },
   "devDependencies": {

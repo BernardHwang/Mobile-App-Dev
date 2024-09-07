@@ -1,12 +1,12 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DatePicker from 'react-native-date-picker'
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
-import React, { useContext, useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { launchImageLibrary } from 'react-native-image-picker';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
 import { createEventOnline } from '../firestore-service';
 import { createEventLocally, getDBConnection } from '../db-services';
@@ -29,6 +29,7 @@ const AddEvent = ({navigation}: any) => {
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
     const [isOnline, setIsOnline] = useState<boolean>(true);
+    const [errorMessage, setErrorMessage] = useState('');
     const defaultImages = [
         {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
         {uri: require('../images/eventImg2.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg2.jpg?alt=media&token=162760ed-dca8-474d-b267-28179d6bb833'},
@@ -75,18 +76,23 @@ const AddEvent = ({navigation}: any) => {
         return downloadUrl;
     };
     
-    const handleDatePickerChange = (event: any, selectedDate?: Date) => {
+    const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
             if (isStartDatePicker) {
                 setStartDate(selectedDate);
+                //Reset end date if start date is late than end date
+                if (endDate && moment(endDate).isBefore(selectedDate)){
+                    setEndDate(undefined);
+                }
             } else {
                 setEndDate(selectedDate);
+                
             }
         }
     };
 
-    const handleTimePickerChange = (event: any, selectedTime?: Date) => {
+    const handleTimePickerChange = (selectedTime?: Date) => {
         setShowTimePicker(false);
         if (selectedTime) {
             if (isStartTimePicker) {
@@ -146,7 +152,17 @@ const AddEvent = ({navigation}: any) => {
         combined.setMilliseconds(time.getMilliseconds());
         return combined;
     };
-    
+
+    const emailErrorMessage = (input: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (input === '' || emailRegex.test(input)) {
+            setErrorMessage('');  // No error if valid
+        } else {
+            setErrorMessage('Please enter a valid email address');
+        }
+        setGuest(input);  // Update the input field value
+    };
+
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -255,8 +271,8 @@ const AddEvent = ({navigation}: any) => {
                     <View style={styles.body}>
                     <InputWithIconLabel
                     orientation={'horizontal'}
-                    iconName={"calendar-check-o"}
-                    size={20}
+                    iconName={"calendar-check"}
+                    size={25}
                     placeholder="Add Event Title"
                     value={eventTitle}
                     onChangeText={(input: string) => setTitle(input)}
@@ -266,7 +282,7 @@ const AddEvent = ({navigation}: any) => {
                         <Text style={{marginBottom: 15}}>Start at</Text>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="calendar" size={20} color="#26294D" style={styles.icon} />
+                                <FontAwesome name="calendar" size={20} color="#26294D" style={{marginRight: 10}} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartDatePicker(true);
@@ -278,7 +294,7 @@ const AddEvent = ({navigation}: any) => {
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="clock-o" size={20} color="#26294D" style={styles.icon} />
+                                <FontAwesome name="clock-o" size={20} color="#26294D" style={{marginHorizontal: 10}} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartTimePicker(true);
@@ -296,7 +312,7 @@ const AddEvent = ({navigation}: any) => {
                         <Text style={{marginBottom: 15}}>End at</Text>
                         <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="calendar" size={20} color="#26294D" style={styles.icon} />
+                                <FontAwesome name="calendar" size={20} color="#26294D" style={{marginRight: 10}}  />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartDatePicker(false);
@@ -308,7 +324,7 @@ const AddEvent = ({navigation}: any) => {
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.dateTimePicker}>
-                                <Icon name="clock-o" size={20} color="#26294D" style={styles.icon} />
+                                <FontAwesome name="clock-o" size={20} color="#26294D" style={{marginHorizontal: 10}} />
                                 <TouchableOpacity
                                     onPress={() => {
                                         setIsStartTimePicker(false);
@@ -323,7 +339,7 @@ const AddEvent = ({navigation}: any) => {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Icon name="map-marker" size={28} color="#26294D" style={styles.icon} />
+                        <FontAwesome name="map-marker" size={28} color="#26294D"/>
                         <View style={{flex:1}}>
                             <GooglePlacesAutocomplete
                             placeholder="Add location"
@@ -339,18 +355,16 @@ const AddEvent = ({navigation}: any) => {
                             }}
                             styles={{
                                 textInputContainer: {
-                                backgroundColor: 'transparent',
                                 flexDirection: 'row',
                                 alignItems: 'center',
                                 paddingHorizontal: 10,
-                                zIndex: 1, 
+                                width: 310,
+                                zIndex: 1,
                                 },
                                 textInput: {
                                 height: 40,
                                 paddingLeft: 10,
-                                backgroundColor: 'transparent',
-                                borderBottomWidth: 1,
-                                borderBottomColor: 'black',
+                                backgroundColor: '#eae4f0',
                                 fontSize: 14,
                                 flex: 1,
                                 },
@@ -369,35 +383,38 @@ const AddEvent = ({navigation}: any) => {
                     
                     <InputWithIconLabel
                     orientation={'horizontal'}
-                    iconName={"user-plus"}
-                    size={20}
+                    iconName={"account-plus"}
+                    size={25}
                     placeholder='Invite Guest'
                     value={guest}
-                    onChangeText={(input: string) => setGuest(input)}
+                    onChangeText={(input: string) => emailErrorMessage(input)}
                     keyboardType='email-address'
+                    errorMessage={errorMessage}
                     />
+                    {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
                     <InputWithIconLabel
                     orientation={'horizontal'}
-                    iconName={"users"}
-                    size={20}
+                    iconName={"account-group"}
+                    size={25}
                     placeholder='Seat Capacity'
                     value={seat}
                     onChangeText={(input: number) => setSeat(input)}
                     keyboardType= 'numeric'
                     />
 
-                    <View>
-                        <Text>Event Description</Text>
-                        <TextInput
-                            style={styles.eventDesc}
-                            placeholder="Enter Event Description"
-                            value={desc}
-                            onChangeText={(text: string) => setDesc(text)}
-                            multiline={true}
-                            numberOfLines={7}
-                        />
-                    </View>
+                    <InputWithIconLabel
+                    orientation={'horizontal'}
+                    iconName={"text-long"}
+                    size={25}
+                    placeholder='Add Event Description'
+                    value={desc}
+                    onChangeText={(text: string) => setDesc(text)}
+                    multiline={true}
+                    numberOfLines={7}
+                    containerStyle={{alignItems: 'flex-start'}}
+                    styles={{textAlignVertical: 'top'}}
+                    />
 
                     <View>
                         <Text style = {{marginVertical: 15}}>Choose an image</Text>
@@ -419,20 +436,28 @@ const AddEvent = ({navigation}: any) => {
                     </View>
                 </View>
                 {showDatePicker && (
-                    <DateTimePicker
-                        value={isStartDatePicker ? (startDate || new Date()) : (endDate || new Date())}
+                    <DatePicker
+                        modal
+                        date={isStartDatePicker ? (startDate || new Date()) : (endDate || new Date())}
                         mode="date"
-                        display="default"
-                        onChange={(event, selectedDate) => handleDatePickerChange(event, selectedDate)}
-                        minimumDate={isStartDatePicker?undefined:startDate||new Date()}
+                        open={showDatePicker}
+                        buttonColor='#26294D'
+                        dividerColor='#26294D'
+                        onConfirm={(selectedDate) => handleDatePickerChange(selectedDate)}
+                        onCancel={()=>setShowDatePicker(false)}
+                        minimumDate={isStartDatePicker?new Date():startDate||new Date()}
                     />
                 )}
                 {showTimePicker && (
-                    <DateTimePicker
-                        value={isStartTimePicker ? startTime || new Date() : endTime || new Date()}
+                    <DatePicker
+                        modal
+                        date={isStartTimePicker ? (startTime || new Date()) : (endTime || new Date())}
                         mode="time"
-                        display="default"
-                        onChange={(event, selectedTime) => handleTimePickerChange(event, selectedTime)}
+                        open={showTimePicker}
+                        buttonColor='#26294D'
+                        dividerColor='#26294D'
+                        onConfirm={(selectedTime) => handleTimePickerChange(selectedTime)}
+                        onCancel={()=>setShowTimePicker(false)}
                     />
                 )}
                 </View>
@@ -445,7 +470,7 @@ const AddEvent = ({navigation}: any) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 15,
+        padding: 17,
         backgroundColor: '#fdf1f0'
     },
     header: {
@@ -476,29 +501,31 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        //margin: 15,
         padding: 10
     },
     dateTimeContainer: {
         flexDirection: 'column',
-        margin: 13
+        margin: 7
     },
     dateTimePicker: {
         flexDirection: 'row',
         flex: 1,
         alignItems: 'center',
-        borderBottomColor: 'black',
-        borderBottomWidth: 1,
-        paddingBottom: 13, 
-        marginHorizontal: 6
+        paddingBottom: 13,
     },
     inputTouchable: {
         flex: 1,
-        marginLeft: 10,
         justifyContent: 'center',
+        borderColor: 'transparent',
+        borderWidth: 1,
+        backgroundColor: '#eae4f0',
+        paddingVertical: 9,
+        paddingHorizontal: 10,
+        borderRadius: 4,
     },
-    icon: {
-        marginRight: 10,
+    errorText: {
+        color: '#b52a2a',  // Error message in red
+        marginLeft: 35
     },
     eventDesc: {
         marginTop: 15,
