@@ -1,18 +1,21 @@
 import React from 'react';
 import {View, Text, TextInput, StyleSheet, TouchableNativeFeedback} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const InputWithIconLabel = (props: any) => {
     const orientationDirection = (props.orientation == 'horizontal')? 'row' : 'column';
 
     return (
-        <View style={[style.inputContainer, {flexDirection: orientationDirection}]}>
-            <Icon name={props.iconName} style={style.icon} color={'#26294D'} {...props}/>
+        <View style={[style.inputContainer, {flexDirection: orientationDirection}, props.containerStyle]}>
+            <Icon name={props.iconName} color={'#26294D'} {...props}/>
             <TextInput
-                style={style.input}
+                style={[style.input, props.styles, props.errorMessage ? style.inputError : null]}
                 placeholderTextColor="#999"
                 {...props}
             />
+            {props.errorMessage ? (
+                <Icon name="alert-circle" color="#b52a2a" size={25} style={style.errorIcon} />
+            ) : null}
         </View>
     );
 }
@@ -59,17 +62,27 @@ const AppButton = (props: any) => {
 const style = StyleSheet.create({
     inputContainer: {
         alignItems: 'center',
-        borderBottomColor: 'black',
-        borderBottomWidth: 1,
-        margin: 15
+        marginVertical: 15,
+        marginLeft: 0
     },
     input: {
         flex: 1,
         marginLeft: 10,
+        borderWidth: 1,
+        borderColor: 'transparent',
+        backgroundColor: '#eae4f0',
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 4,
     },
-    icon: {
-        marginRight: 10,
+    inputError: {
+        borderColor: '#b52a2a',  // Add red border when error occurs
+        borderWidth: 1,
     },
+    errorIcon: {
+        marginLeft: 5,  // Spacing between the input field and the error icon
+    },
+    
 })
 
 const inputLabelStyles = StyleSheet.create({
