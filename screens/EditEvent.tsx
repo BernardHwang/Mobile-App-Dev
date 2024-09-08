@@ -15,16 +15,17 @@ import DatePicker from 'react-native-date-picker';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
-    //const { socket } = useContext(SocketContext);
-    const [eventTitle, setTitle] = useState<string>('');
-    const [startDate, setStartDate] = useState<Date|null>(null);
-    const [endDate, setEndDate] = useState<Date|null>(null);
-    const [startTime, setStartTime] = useState<Date|null>(null);
-    const [endTime, setEndTime] = useState<Date|null>(null);
-    const [location, setLocation] = useState<string>('');
-    const [guest, setGuest] = useState<string>('');
-    const [seat, setSeat] = useState<number>(0);
-    const [desc, setDesc] = useState<string>('');
+    const { event } = route.params;
+
+    const [eventTitle, setTitle] = useState<string>(event.name);
+    const [startDate, setStartDate] = useState<Date|null>(event.start_date ? new Date(event.start_date) : null);
+    const [endDate, setEndDate] = useState<Date|null>(event.end_date ? new Date(event.end_date) : null);
+    const [startTime, setStartTime] = useState<Date|null>(event.start_date ? new Date(event.start_date) : null);
+    const [endTime, setEndTime] = useState<Date|null>(event.end_date ? new Date(event.end_date) : null);
+    const [location, setLocation] = useState<string>(event.location);
+    const [guest, setGuest] = useState<string>(event.guest||'');
+    const [seat, setSeat] = useState<number>(event.seats||0);
+    const [desc, setDesc] = useState<string>(event.description);
     const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
@@ -37,8 +38,6 @@ const EditEvent = ({navigation, route}: any) => {
         {uri: require('../images/eventImg2.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg2.jpg?alt=media&token=162760ed-dca8-474d-b267-28179d6bb833'},
         {uri: require('../images/eventImg3.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg3.jpg?alt=media&token=7b3a58d2-1fa6-4ae0-b364-377a852b5e4a'}
     ];
-
-    const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
 
     const checkConnection = async () => {
         const connected = await checkInternetConnection();
@@ -53,31 +52,12 @@ const EditEvent = ({navigation, route}: any) => {
     };
 
     useEffect(()=>{
+        console.log(event);
+    },[])
+    useEffect(()=>{
         checkConnection();
     },[navigation])
 
-    const handleChoosePhoto = () => {
-        launchImageLibrary(
-            { mediaType: 'photo', maxWidth: 300, maxHeight: 300, quality: 1 },
-            (response) => {
-                if (response.assets && response.assets.length > 0) {
-                    const userImage = response.assets[0].uri;
-                    setSelectedImage({uri: userImage}); 
-                }
-            }
-        );
-    };
-
-    const uploadImageToStorage = async (imageUri: string) => {
-        const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
-        const storageRef = storage().ref(`events/${filename}`);
-
-        await storageRef.putFile(imageUri);
-        const downloadUrl = await storageRef.getDownloadURL();
-
-        return downloadUrl;
-    };
-    
     const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
@@ -187,19 +167,7 @@ const EditEvent = ({navigation, route}: any) => {
 
     const editEvent = async (id:string) => {
         if (await handleSubmit()){
-            
             try {
-                let imageUrl = '';
-                if (selectedImage && selectedImage.uri && typeof selectedImage.uri === 'string') {
-                    if (selectedImage.uri.startsWith('file://')) {
-                        imageUrl = await uploadImageToStorage(selectedImage.uri);
-                    } else {
-                        imageUrl = selectedImage.url;
-                    }
-                } else if (selectedImage && selectedImage.url) {
-                    imageUrl = selectedImage.url;
-                }
-        
                 const eventData = {
                     event_id: id,
                     name: eventTitle,
@@ -209,14 +177,18 @@ const EditEvent = ({navigation, route}: any) => {
                     guest: guest,
                     description: desc,
                     seats: seat,
-                    image: imageUrl,
+                    image: event.image,
                     host_id: user.uid
                 };
         
                 await updateEventOnline(eventData)
                 await editEventLocally(await getDBConnection(), eventData)
         
-                navigation.goback();
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Saved' }],
+                });
+
             } catch (error) {
                 console.error("Error editing event: ", error);
                 Alert.alert('Error', 'An error occurred while updating the event. Please try again.');
@@ -228,11 +200,15 @@ const EditEvent = ({navigation, route}: any) => {
             <ScrollView keyboardShouldPersistTaps='always'>
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.goBack()}}>
+                        <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.reset({
+                                                                                        index: 0,
+                                                                                        routes: [{ name: 'Saved' }],
+                                                                                    })}}
+                    >
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
                         <Text style={styles.title}>Edit Event</Text>
-                        <TouchableOpacity style={styles.saveBtn} onPress={() => {editEvent(route.params.id), generateNotification()}}>
+                        <TouchableOpacity style={styles.saveBtn} onPress={() => {editEvent(event.id)}}>
                             <Text style={styles.btnText}>Save</Text>
                         </TouchableOpacity>
                     </View>
@@ -311,7 +287,7 @@ const EditEvent = ({navigation, route}: any) => {
                         <FontAwesome name="map-marker" size={28} color="#26294D"/>
                         <View style={{flex:1}}>
                             <GooglePlacesAutocomplete
-                            placeholder="Add location"
+                            placeholder={location? location:'Add Location'}
                             onPress={(data, details = null) => {
                                 if (details) {
                                     console.log("Selected Location:", data.description);
@@ -367,8 +343,8 @@ const EditEvent = ({navigation, route}: any) => {
                     iconName={"account-group"}
                     size={25}
                     placeholder='Seat Capacity'
-                    value={seat}
-                    onChangeText={(input: number) => setSeat(input)}
+                    value={seat? String(seat): ''}
+                    onChangeText={(input: string) => setSeat(Number(input))}
                     keyboardType= 'numeric'
                     />
 
@@ -385,24 +361,6 @@ const EditEvent = ({navigation, route}: any) => {
                     styles={{textAlignVertical: 'top'}}
                     />
 
-                    <View>
-                        <Text style = {{marginVertical: 15}}>Choose an image</Text>
-                        <View style={styles.imagesSection}>
-                        {defaultImages.map((image, index) => (
-                            <TouchableOpacity key={index} onPress={() => setSelectedImage(image)}>
-                                <Image source={image.uri} style={[styles.image, selectedImage.uri === image.uri && styles.selectedImage]} />
-                            </TouchableOpacity>
-                        ))}
-
-                            <TouchableOpacity onPress={handleChoosePhoto} style={styles.uploadBox}>
-                                {selectedImage && !defaultImages.some(image => image.uri === selectedImage.uri) ? (
-                                    <Image source={selectedImage} style={styles.selectedImage}/>
-                                ) : (
-                                    <Text>Tap to Upload</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    </View>
                 </View>
                 {showDatePicker && (
                     <DatePicker
