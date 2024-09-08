@@ -18,13 +18,6 @@ const HomeScreen = ({ navigation }:any) => {
     fetchEventsForSelectedDay(selectedDay);
   }, [selectedDay]);
 
-
- /* const _query = async() => {
-    await syncEventsData(await getDBConnection());
-    await syncEventsParticipantsData(await getDBConnection());
-    setEvents(await getEvents(await getDBConnection()));
-  }*/
-
   const selectDay = () => {
     setModalVisible(!modalVisible);
   };
@@ -46,13 +39,17 @@ const HomeScreen = ({ navigation }:any) => {
             description: data.description,
             image: data.image,
             location: data.location,
-            time: eventStartDate.format('HH:mm'), // Format time in local time
+            start_time: eventStartDate.format('HH:mm'), // Format time in local time
             start_date: eventStartDate,
+            end_time: eventEndDate.format('HH:mm'),
             end_date: eventEndDate, // Keep the end date for comparison
+            guest: data.guest,
+            seats: data.seats,
+            host_id: data.host_id
           };
         })
         .filter((event) => event.start_date.isSameOrBefore(day, 'day') && event.end_date.isSameOrAfter(day, 'day')) // Filter by date range
-        .sort((a, b) => moment(a.time, 'HH:mm').diff(moment(b.time, 'HH:mm')));
+        .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
 
       setEvents(fetchedEvents);
     } catch (error) {
@@ -122,13 +119,13 @@ const HomeScreen = ({ navigation }:any) => {
               markedDates={{
                 [selectedDay]: {
                   selected: true,
-                  selectedColor: '#8A6536', // Background color of the selected date
+                  selectedColor: '#26294D', // Background color of the selected date
                   selectedTextColor: '#FFFFFF', // Text color of the selected date
                 }
               }}
               theme={{
                 calendarBackground: '#f0f0f0', // Background color for the calendar
-                todayTextColor: '#8A6536', // Color for today's date
+                todayTextColor: '#26294D', // Color for today's date
               }}
               style={{marginBottom: 20,borderRadius: 15}}
             />

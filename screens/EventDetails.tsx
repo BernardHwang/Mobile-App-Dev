@@ -1,16 +1,35 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Animated, Modal } from 'react-native';
-import MaterialCommunityIcons from "react-native-vector-icons/Ionicons";
-import MaterialCommunityIcons2 from "react-native-vector-icons/MaterialCommunityIcons";
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useRef, useContext, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Animated, Modal, Alert } from 'react-native';
+import Ionicons from "react-native-vector-icons/Ionicons";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { AuthContext } from '../navigation/AuthProvider';
+import { cancelEventOnline, getEventsParticipantsByEventID, joinEvent, unjoinEvent } from '../firestore-service';
+import { cancelEventLocally, getDBConnection } from '../db-services';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
 const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 
-const EventDetails = ({ route }) => {
+const EventDetails = ({ route, navigation }: any) => {
     const { event } = route.params;
-    const navigation = useNavigation();
+    const { user } = useContext(AuthContext);
+
+    const [cancel, setCancel] = useState<boolean>(false);
+    const [join, setJoin] = useState<boolean>(false);
+
+    // Fetch participants on mount and check if the user is already a participant
+    const checkIfJoined = async () => {
+        try {
+            const participants = await getEventsParticipantsByEventID(event.id);
+            const isParticipant = participants.some(p => p.participant_id === user.uid);
+            setJoin(isParticipant);
+        } catch (error) {
+            console.error("Error fetching participants: ", error);
+        }
+    };
+
+    useEffect(() => {checkIfJoined()}, [event.id, user.uid]);
+
     const scrollY = useRef(new Animated.Value(0)).current;
     const imgHeight = scrollY.interpolate({
         inputRange: [0, IMG_HEIGHT - MIN_IMG_HEIGHT],
@@ -29,6 +48,43 @@ const EventDetails = ({ route }) => {
         setModalVisible(false);
         navigation.goBack(); // Navigate back to the previous screen when closing the modal
     };
+
+    const cancelEvent = async (id: string) => {
+        try{
+            await cancelEventOnline(id);
+            await cancelEventLocally(await getDBConnection(), id);
+            setCancel(false);
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+            });
+        } catch(error){
+            console.error("Error canceling event: ", error);
+            Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
+        }
+        
+    };
+
+    const joinEventFunction = async (participant_id: string, event_id: string) => {
+        try{
+            await joinEvent(participant_id, event_id);
+            setJoin(!join);
+        }catch(error){
+            console.error("Error joining event: ", error);
+            Alert.alert('Error', 'An error occurred while joining event. Please try again.');
+        }
+    }
+
+    const unjoinEventFunction = async (participant_id: string, event_id: string) => {
+        try{
+            await unjoinEvent(participant_id, event_id);
+            setJoin(!join);
+        }catch(error){
+            console.error("Error unjoining event: ", error);
+            Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
+        }
+    }
 
     return (
         <Modal
@@ -62,7 +118,7 @@ const EventDetails = ({ route }) => {
                 <View style={styles.contentWrapper}>
                     <Text style={styles.title}>{event.name} </Text>
                     <View style={styles.locationWrapper}>
-                        <MaterialCommunityIcons name="location-sharp" size={18} color='#3e2769' />
+                        <Ionicons name="location-sharp" size={18} color='#3e2769' />
                         <Text style={styles.paragraph}>{event.location}</Text>
                         <Text style={styles.seats}>3m Seats Left</Text>
                     </View>
@@ -70,14 +126,14 @@ const EventDetails = ({ route }) => {
                     <View style={styles.timeContainer}>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
-                                <Text style={styles.paragraph}>Start Time</Text>
-                                <Text style={{ fontSize: 30, color: '#3e2769', fontWeight: '500', }}>{event.time}</Text>
+                                <Text style={styles.paragraph}>Date</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_date.format('Do MMM')}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
-                                <Text style={styles.paragraph}>Date</Text>
-                                <Text style={{ fontSize: 25, color: '#3e2769', fontWeight: '500', }}>{event.startDate.format('Do MMM')}</Text>
+                                <Text style={styles.paragraph}>Time</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_time} - {event.end_time}</Text>
                             </View>
                         </View>
                     </View>
@@ -90,12 +146,41 @@ const EventDetails = ({ route }) => {
             </Animated.ScrollView>
 
             {/* Fixed Footer */}
+            {event.host_id == user.uid?
+            //Cancel event
             <View style={styles.detailFooter}>
-                <TouchableOpacity onPress={() => { }} style={styles.footerBtn} >
-                    <MaterialCommunityIcons2 name="bell-ring-outline" size={14} style={styles.footerIcon} />
-                    <Text style={styles.footerBtnTxt}>Remind Me ༼;´༎ຶ ۝ ༎ຶ༽ </Text>
+                <TouchableOpacity onPress={() => {setCancel(true)}} style={styles.footerBtn} >
+                    <Text style={styles.footerBtnTxt}>Cancel Event</Text>
                 </TouchableOpacity>
             </View>
+            : 
+            // Join or unjoin event
+            <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+                <TouchableOpacity onPress={()=>{}}> 
+                    <MaterialCommunityIcons name="bell-ring-outline" size={23} color='#3e2769' style={styles.remindBtn} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => {join?unjoinEventFunction(user.uid, event.id):joinEventFunction(user.uid, event.id)}} style={styles.joinButton} >
+                    <Text style={styles.footerBtnTxt}>{join ? "Unjoin" : "Join"}</Text>
+                </TouchableOpacity>
+            </View>
+            }
+
+            {cancel ? (
+            <View style={styles.overlay}>
+                <View style={styles.cancelContainer}>
+                <Text style={{ textAlign: 'center', margin: 10, fontSize: 18 }}>Confirm cancel?</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', }}>
+                    <TouchableOpacity style={[styles.yesNoBtn, { backgroundColor: '#e7dcf2' }]} onPress={() => { cancelEvent(event.id) }}>
+                    <Text style={{ color: 'black', fontSize: 15 }}>Yes</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.yesNoBtn, { backgroundColor: '#3e2769' }]} onPress={() => { setCancel(false) }}>
+                    <Text style={{ color: 'white' }}>No</Text>
+                    </TouchableOpacity>
+                </View>
+                </View>
+            </View>
+            ) : null}
+
 
             {/* Custom Back Button */}
             <TouchableOpacity
@@ -103,9 +188,22 @@ const EventDetails = ({ route }) => {
                 style={styles.headerLeftContainer}
             >
                 <View style={styles.headerIconContainer}>
-                    <MaterialCommunityIcons name='chevron-back-outline' size={30} color="#3e2769" />
+                    <Ionicons name='chevron-back-outline' size={30} color="#3e2769" />
                 </View>
             </TouchableOpacity>
+
+            { /* Edit Button */}
+            {event.host_id == user.uid?
+           <TouchableOpacity
+                onPress={()=> navigation.navigate('EditEvent', {event: event})}
+                style={styles.headerRightContainer}
+           >
+                <View style={styles.headerIconContainer}>
+                    <Ionicons name='pencil' size={30} color="#3e2769"/>
+                </View>
+           </TouchableOpacity>
+            : null}
+           
         </View>
         </Modal>
     );
@@ -168,6 +266,7 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
         minWidth: 150,
+        margin: 5
     },
     detailFooter: {
         position: 'absolute',
@@ -198,6 +297,20 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 9,
     },
+    joinButton: {
+        backgroundColor: '#3e2769',
+        padding: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 230
+    },
+    remindBtn: {
+        backgroundColor: '#e7dcf2',
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 10
+    },
     headerLeftContainer: {
         position: 'absolute',
         left: 0,
@@ -218,4 +331,46 @@ const styles = StyleSheet.create({
         minWidth: 50,
         minHeight: 50,
     },
+    headerRightContainer: {
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: 50,
+        justifyContent: 'center',
+        padding: 10,
+        zIndex: 1,
+    },
+    cancelContainer: {
+        borderWidth: 1,
+        backgroundColor: 'white',
+        padding: 10,
+        width: 250,
+        height: 180,
+        justifyContent: 'center',
+        flexDirection: 'column',
+        alignSelf: 'center',
+        position: 'absolute',
+        top: 250,
+        bottom: 300,
+        borderColor: 'transparent',
+        borderRadius: 10,
+    },
+    yesNoBtn:{
+        padding: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 100,
+    },
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2, // Ensure it appears above other content
+        }
 });

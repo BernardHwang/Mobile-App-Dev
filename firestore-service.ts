@@ -102,7 +102,6 @@ export const updateEventOnline = async(eventData: Event) => {
         location: updateData.location,
         seats: updateData.seats,
         guest: updateData.guest,
-        image: updateData.image
     }
     await firestore().collection('events').doc(eventData.event_id).update(eventDataFirestore);
     console.log('Event added successfully in Firestore!');

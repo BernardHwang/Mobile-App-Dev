@@ -269,7 +269,7 @@ export const editEventLocally = async(
     db: SQLiteDatabase, 
     event: Event) => {
         try{
-            const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=?,image=? WHERE event_id=?';
+            const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=? WHERE event_id=?';
             const parameters = [
                 event.name,
                 event.description,
@@ -278,7 +278,6 @@ export const editEventLocally = async(
                 event.location,
                 event.guest,
                 event.seats,
-                event.image,
                 event.event_id,
               ];
             await db.executeSql(query, parameters);

@@ -8,6 +8,7 @@ import SavedScreen from '../screens/SavedScreen.tsx';
 import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
+import EditEvent from '../screens/EditEvent.tsx';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -71,6 +72,10 @@ const StackNav = () => {
             <Stack.Screen
                 name="EventDetails"
                 component={EventDetails}
+            />
+            <Stack.Screen
+                name="EditEvent"
+                component={EditEvent}
             />
             <Stack.Screen
                 name="Notification"
