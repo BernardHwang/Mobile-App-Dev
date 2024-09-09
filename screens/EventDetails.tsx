@@ -5,6 +5,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import { AuthContext } from '../navigation/AuthProvider';
 import { cancelEventOnline, getEventsParticipantsByEventID, joinEvent, unjoinEvent } from '../firestore-service';
 import { cancelEventLocally, getDBConnection } from '../db-services';
+import moment from 'moment';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
@@ -127,7 +128,7 @@ const EventDetails = ({ route, navigation }: any) => {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.paragraph}>Date</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_date.format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('Do MMM')}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
