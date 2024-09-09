@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore'; // Import from @react-native-firebase
+import Icon from 'react-native-vector-icons/Ionicons';
+import { Swipeable } from 'react-native-gesture-handler';
 
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -29,6 +31,33 @@ const NotificationScreen = () => {
     }
   };
 
+  const deleteNotification = async (notificationId) => {
+    try {
+      if (!user || !user.uid) return;
+
+      await firestore()
+        .collection('users')
+        .doc(user.uid)
+        .collection('notifications')
+        .doc(notificationId)
+        .delete();
+
+      setNotifications((prevNotifications) => 
+        prevNotifications.filter((notification) => notification.id !== notificationId)
+      );
+    } catch (error) {
+      console.error("Error deleting notification: ", error);
+    }
+  };
+
+  const renderRightActions = (notificationId) => {
+    return (
+      <TouchableOpacity onPress={() => deleteNotification(notificationId)} style={styles.deleteButton}>
+        <Icon name="trash-bin-outline" size={35} color="white" />
+      </TouchableOpacity>
+    );
+  };
+
   useEffect(() => {
     getNotification();
   }, [user]);
@@ -42,11 +71,14 @@ const NotificationScreen = () => {
           data={notifications}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.notificationItem}>
-              <Text style={styles.text}>ID: {item.id}</Text>
-              <Text style={styles.text}>Title: {item.title}</Text>
-              <Text style={styles.text}>Message: {item.message}</Text>
-            </View>
+            <Swipeable
+              renderRightActions={() => renderRightActions(item.id)}
+            >
+              <View style={styles.notificationItem}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.text}>{item.message}</Text>
+              </View>
+            </Swipeable>
           )}
         />
       )}
@@ -61,19 +93,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  text: {
+  title: {
     fontSize: 18,
+    fontWeight: 'bold'
+  },
+  text: {
+    fontSize: 15,
+    textAlign: 'justify'
   },
   notificationItem: {
-    marginBottom: 10,
+    flex: 1,
     padding: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
+    backgroundColor: '#fff',
+    height: 100
   },
   noNotificationsText: {
     fontSize: 18,
     color: 'gray',
+    fontWeight: 'bold'
+  },
+  deleteButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 75,
+    backgroundColor: 'red',
+    height: 100
   },
 });
 
