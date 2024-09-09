@@ -75,7 +75,7 @@ const HomeScreen = ({ navigation }:any) => {
         </View>
       )}
       <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{item.time}</Text>
+      <Text style={styles.eventTime}>{item.start_time}</Text>
     </TouchableOpacity>
   );
 
