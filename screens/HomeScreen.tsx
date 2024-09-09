@@ -40,15 +40,15 @@ const HomeScreen = ({ navigation }:any) => {
             image: data.image,
             location: data.location,
             start_time: eventStartDate.format('HH:mm'), // Format time in local time
-            start_date: eventStartDate,
+            start_date: eventStartDate.toISOString(),
             end_time: eventEndDate.format('HH:mm'),
-            end_date: eventEndDate, // Keep the end date for comparison
+            end_date: eventEndDate.toISOString(), // Keep the end date for comparison
             guest: data.guest,
             seats: data.seats,
             host_id: data.host_id
           };
         })
-        .filter((event) => event.start_date.isSameOrBefore(day, 'day') && event.end_date.isSameOrAfter(day, 'day')) // Filter by date range
+        .filter((event) => moment(event.start_date).isSameOrBefore(day, 'day') && moment(event.end_date).isSameOrAfter(day, 'day')) // Filter by date range
         .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
 
       setEvents(fetchedEvents);
