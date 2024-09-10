@@ -37,7 +37,7 @@ const getEventData = async (eventId) => {
     return eventDoc.data();
 };
 
-//Set up a listener for event creation and modification outside of the socket connection
+//Set up a listener for event creation
 eventsCollectionRef.onSnapshot(async snapshot => {
     snapshot.docChanges().forEach(async (change) => {
         const eventData = change.doc.data();
@@ -77,7 +77,7 @@ eventsCollectionRef.onSnapshot(async snapshot => {
 eventsCollectionRef.onSnapshot(async snapshot => {
     snapshot.docChanges().forEach(async (change) => {
         const eventId = change.doc.id;
-        const eventParticipantsRef = eventsCollectionRef.doc(eventId).collection('participant');
+        const eventParticipantsRef = eventsCollectionRef.doc(eventId).collection('eventParticipant');
 
         try {
             const participantSnapshot = await eventParticipantsRef.get();
@@ -86,8 +86,7 @@ eventsCollectionRef.onSnapshot(async snapshot => {
                 // Listen for real-time changes in the participant subcollection
                 eventParticipantsRef.onSnapshot(async (participantSnapshot) => {
                     participantSnapshot.docChanges().forEach(async (participantChange) => {
-                        const participantData = participantChange.doc.data();
-                        const userId = participantData.userId;
+                        const userId = participantChange.doc.id;
 
                         const userData = await getUserData(userId);
                         const eventData = await getEventData(eventId);
@@ -108,6 +107,7 @@ eventsCollectionRef.onSnapshot(async snapshot => {
                             };
                         }
                         // Emit the notification for participation changes
+                        console.log(notification);
                         io.emit('participationNotification', { notification, userId });
                     });
                 });
