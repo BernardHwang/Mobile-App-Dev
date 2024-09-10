@@ -1,11 +1,12 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Animated, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Animated, Modal, Alert, FlatList } from 'react-native';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { AuthContext } from '../navigation/AuthProvider';
-import { cancelEventOnline, getEventsParticipantsByEventID, joinEvent, unjoinEvent } from '../firestore-service';
+import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../firestore-service';
 import { cancelEventLocally, getDBConnection } from '../db-services';
 import moment from 'moment';
+import { Avatar } from 'react-native-elements';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
@@ -14,20 +15,29 @@ const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 const EventDetails = ({ route, navigation }: any) => {
     const { event } = route.params;
     const { user } = useContext(AuthContext);
-
+    const [participantsCount, setParticipantsCount] = useState(0);
     const [cancel, setCancel] = useState<boolean>(false);
     const [join, setJoin] = useState<boolean>(false);
-
+    const [joinedUsers, setJoinedUsers] = useState<any[]>([]);
+    const [showSplitButtons, setShowSplitButtons] = useState<boolean>(false);
+    
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
         try {
             const participants = await getEventsParticipantsByEventID(event.id);
+            const icons = await getParticipantsByEventID(event.id);
             const isParticipant = participants.some(p => p.participant_id === user.uid);
             setJoin(isParticipant);
+            setJoinedUsers(icons);
+            setParticipantsCount(participants.length);
+            setShowSplitButtons(isParticipant);
+            
         } catch (error) {
             console.error("Error fetching participants: ", error);
         }
     };
+
+    
 
     useEffect(() => {checkIfJoined()}, [event.id, user.uid]);
 
@@ -71,6 +81,7 @@ const EventDetails = ({ route, navigation }: any) => {
         try{
             await joinEvent(participant_id, event_id);
             setJoin(!join);
+            checkIfJoined();
         }catch(error){
             console.error("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
@@ -81,6 +92,7 @@ const EventDetails = ({ route, navigation }: any) => {
         try{
             await unjoinEvent(participant_id, event_id);
             setJoin(!join);
+            checkIfJoined();
         }catch(error){
             console.error("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
@@ -117,24 +129,45 @@ const EventDetails = ({ route, navigation }: any) => {
 
                 {/* Content */}
                 <View style={styles.contentWrapper}>
+                        {joinedUsers.length > 0 ? (
+                            <FlatList
+                                horizontal
+                                data={joinedUsers}
+                                keyExtractor={(item) => item.id}
+                                contentContainerStyle={styles.avatarList}
+                                renderItem={({ item }) => (
+                                    <View style={{  backgroundColor: 'transparent' }}>
+                                        <Avatar 
+                                            source={{ uri: item.pfp }}
+                                            size={35}
+                                            rounded
+                                            containerStyle={{overflow:'hidden'}}
+                                        />
+                                    </View>
+                                )}
+                            />
+                        ) : (
+                    <Text style={styles.paragraph}>No participants found for current event</Text>
+                )}
                     <Text style={styles.title}>{event.name} </Text>
                     <View style={styles.locationWrapper}>
                         <Ionicons name="location-sharp" size={18} color='#3e2769' />
                         <Text style={styles.paragraph}>{event.location}</Text>
-                        <Text style={styles.seats}>3m Seats Left</Text>
                     </View>
-
+                    <Text style={styles.seats}>{event.seats - participantsCount} Seats Left</Text>
                     <View style={styles.timeContainer}>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
-                                <Text style={styles.paragraph}>Date</Text>
+                                <Text style={styles.timeHeader}>Start</Text>
                                 <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_time}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
-                                <Text style={styles.paragraph}>Time</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_time} - {event.end_time}</Text>
+                                <Text style={styles.timeHeader}>End</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.end_time}</Text>
                             </View>
                         </View>
                     </View>
@@ -149,27 +182,37 @@ const EventDetails = ({ route, navigation }: any) => {
             {/* Fixed Footer */}
             {event.host_id == user.uid?
             //Cancel event
+            
             <View style={styles.detailFooter}>
                 <TouchableOpacity onPress={() => {setCancel(true)}} style={styles.footerBtn} >
                     <Text style={styles.footerBtnTxt}>Cancel Event</Text>
                 </TouchableOpacity>
             </View>
+            
             : 
             // Join or unjoin event
-            <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                <TouchableOpacity onPress={()=>{}}> 
-                    <MaterialCommunityIcons name="bell-ring-outline" size={23} color='#3e2769' style={styles.remindBtn} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => {join?unjoinEventFunction(user.uid, event.id):joinEventFunction(user.uid, event.id)}} style={styles.joinButton} >
-                    <Text style={styles.footerBtnTxt}>{join ? "Unjoin" : "Join"}</Text>
-                </TouchableOpacity>
+            <View style={styles.detailFooter}>
+                {showSplitButtons ? (
+                <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(false)}} style={styles.remindBtn}>
+                        <MaterialCommunityIcons name="bell-ring-outline" size={23} color='#3e2769'/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
+                        <Text style={styles.footerBtnTxt}>Unjoin Event</Text>
+                    </TouchableOpacity>
+                </View>
+                ) : (
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);joinEventFunction(user.uid, event.id)}} style={styles.footerBtn}>
+                        <Text style={styles.footerBtnTxt}>{join ? "Unjoin" : "Join"}</Text>
+                    </TouchableOpacity>
+                )}
             </View>
             }
 
             {cancel ? (
             <View style={styles.overlay}>
                 <View style={styles.cancelContainer}>
-                <Text style={{ textAlign: 'center', margin: 10, fontSize: 18 }}>Confirm cancel?</Text>
+                <Text style={{ textAlign: 'center', margin: 50, fontSize: 18, fontWeight: '500' }}>Are you sure you want to cancel the event?</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', }}>
                     <TouchableOpacity style={[styles.yesNoBtn, { backgroundColor: '#e7dcf2' }]} onPress={() => { cancelEvent(event.id) }}>
                     <Text style={{ color: 'black', fontSize: 15 }}>Yes</Text>
@@ -227,10 +270,14 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: '#e6e6fa',
     },
     contentWrapper: {
         padding: 20,
+    },
+    avatarList: {
+        flexDirection: 'row', // Ensure avatars are placed horizontally
+        paddingVertical: 10,
     },
     locationWrapper: {
         flexDirection: 'row',
@@ -250,11 +297,17 @@ const styles = StyleSheet.create({
         color: '#3e2769',
         letterSpacing: 0.5,
     },
+    timeHeader: {
+        fontSize: 25,
+        fontWeight: '500',
+        color: '#3e2769',
+        letterSpacing: 0.5,
+    },
     seats: {
+        marginLeft: 28,
         fontSize: 18,
-        marginLeft: 5,
-        fontWeight: '300',
-        color: 'black',
+        fontWeight: '500',
+        color: '#3e2769',
         letterSpacing: 0.5,
     },
     timeContainer: {
@@ -275,15 +328,13 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: 10,
-        backgroundColor: 'white',
-        borderTopWidth: 1,
-        borderTopColor: 'rgb(244,243,243)',
+        backgroundColor: '#e6e6fa',
     },
     footerBtn: {
         flexDirection: 'row',
         backgroundColor: '#3e2769',
         padding: 10,
-        borderRadius: 10,
+        borderRadius: 30,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -294,14 +345,10 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
         marginLeft: 5,
     },
-    footerIcon: {
-        color: 'white',
-        marginBottom: 9,
-    },
-    joinButton: {
+    unjoinButton: {
         backgroundColor: '#3e2769',
         padding: 10,
-        borderRadius: 10,
+        borderRadius: 30,
         alignItems: 'center',
         justifyContent: 'center',
         width: 230
@@ -310,7 +357,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#e7dcf2',
         paddingVertical: 10,
         paddingHorizontal: 30,
-        borderRadius: 10
+        borderRadius: 30
     },
     headerLeftContainer: {
         position: 'absolute',
@@ -345,8 +392,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         backgroundColor: 'white',
         padding: 10,
-        width: 250,
-        height: 180,
+        width: 300,
+        height: 250,
         justifyContent: 'center',
         flexDirection: 'column',
         alignSelf: 'center',
@@ -358,6 +405,7 @@ const styles = StyleSheet.create({
     },
     yesNoBtn:{
         padding: 10,
+        marginBottom: 10,
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',

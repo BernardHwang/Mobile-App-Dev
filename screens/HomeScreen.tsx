@@ -10,6 +10,7 @@ import IconBadge from 'react-native-icon-badge';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
+  // Initialize selectedDay as a moment object
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -30,8 +31,7 @@ const HomeScreen = ({ navigation }:any) => {
       
     return () => unsubscribe();
   }, [selectedDay, user.uid]);
-  
-  
+
   const selectDay = () => {
     setModalVisible(!modalVisible);
   };

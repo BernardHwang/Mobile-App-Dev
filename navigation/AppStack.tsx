@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import SavedScreen from '../screens/SavedScreen.tsx';
+import myEventScreen from '../screens/MyEventScreen.tsx';
 import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
@@ -22,7 +22,7 @@ const AppStack = () => {
 
                     if (route.name === 'Home Page') {
                         iconName = 'home';
-                    } else if (route.name === 'Saved') {
+                    } else if (route.name === 'My Event') {
                         iconName = 'heart';
                     } else if (route.name === 'Profile') {
                         iconName = 'person';
@@ -42,8 +42,8 @@ const AppStack = () => {
                 }}
             />
             <Tab.Screen
-                name="Saved"
-                component={SavedScreen}
+                name="My Event"
+                component={myEventScreen}
 
             />
             <Tab.Screen

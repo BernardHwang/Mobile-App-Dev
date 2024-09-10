@@ -131,7 +131,7 @@ export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any
 }
 
 // Show in 'Hosted event' screen
-export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
+export const getHostEventsByUserIDOffline = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];
         const query =  `SELECT * FROM events WHERE host_id=?`;
@@ -149,7 +149,7 @@ export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): 
 }
 
 // Show in 'Joined event' screen
-export const getJoinEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
+export const getJoinEventsByUserIDOffline = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];
         const query =  `SELECT * FROM events_participants WHERE participant_id=?`;

@@ -2,7 +2,7 @@ import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firest
 import { Event } from './Types';
 
 // Function to get events hosted by a specific user
-export const getHostEventsByUserID = async (user_id: string): Promise<any[]> => {
+export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
     try {
         const eventsRef = firestore().collection('events');
         const snapshot = await eventsRef.where('host_id', '==', user_id).get();
@@ -25,7 +25,7 @@ export const getHostEventsByUserID = async (user_id: string): Promise<any[]> => 
 };
 
 // Function to get events where a specific user is a participant
-export const getJoinEventsByUserID = async (user_id: string): Promise<any[]> => {
+export const getJoinEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
   try {
       const eventsRef = firestore().collection('events');
       const eventDocs = await eventsRef.get(); // Get all events
@@ -37,7 +37,8 @@ export const getJoinEventsByUserID = async (user_id: string): Promise<any[]> => 
           const participantsSnapshot = await eventParticipantsRef.where('participant_id', '==', user_id).get();
           
           if (!participantsSnapshot.empty) {
-              joinedEvents.push({ id: doc.id });
+            const eventData = doc.data();
+            joinedEvents.push({ id: doc.id, ...eventData });
           }
       }
 
@@ -67,6 +68,28 @@ export const getEventsParticipantsByEventID = async (event_id: string): Promise<
   } catch (error) {
       console.error('Failed to get event participants: ', error);
       throw new Error('Failed to get event participants');
+  }
+};
+
+export const getParticipantsByEventID = async (event_id: string): Promise<any[]> => {
+  try {
+    const userRef = firestore().collection('users');
+    const participantsRef = firestore().collection('events').doc(event_id).collection('eventParticipant');
+    const participantsSnapshot = await participantsRef.get();
+    
+    const participantIds = participantsSnapshot.docs.map(doc => doc.data().participant_id);
+    
+    if (participantIds.length === 0) {
+      return []; // No participants found
+    }
+
+    const usersSnapshot = await userRef.where(firestore.FieldPath.documentId(), 'in', participantIds).get();
+    const joinedUsers: any[] = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    return joinedUsers;
+  } catch (error) {
+    console.error('Failed to get event participants: ', error);
+    throw new Error('Failed to get event participants');
   }
 };
 
