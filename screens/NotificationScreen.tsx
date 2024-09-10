@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore'; // Import from @react-native-firebase
 import Icon from 'react-native-vector-icons/Ionicons';
-import { Swipeable } from 'react-native-gesture-handler';
+import { ScrollView, Swipeable } from 'react-native-gesture-handler';
+
 
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
