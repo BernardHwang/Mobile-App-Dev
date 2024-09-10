@@ -5,7 +5,6 @@ import firestore from '@react-native-firebase/firestore'; // Import from @react-
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Swipeable } from 'react-native-gesture-handler';
 
-
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
   const { user } = useContext(AuthContext);
