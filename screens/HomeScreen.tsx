@@ -6,18 +6,32 @@ import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
 import { AuthContext } from '../navigation/AuthProvider';
+import IconBadge from 'react-native-icon-badge';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
-  // Initialize selectedDay as a moment object
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     fetchEventsForSelectedDay(selectedDay);
-  }, [selectedDay]);
-
+  
+    const unsubscribe = firestore()
+      .collection('users')
+      .doc(user.uid)
+      .collection('notifications')
+      .onSnapshot((snapshot) => {
+        setNotificationCount(snapshot.size);
+      }, (error) => {
+        console.error('Error fetching real-time notifications:', error);
+      });
+      
+    return () => unsubscribe();
+  }, [selectedDay, user.uid]);
+  
+  
   const selectDay = () => {
     setModalVisible(!modalVisible);
   };
@@ -88,13 +102,25 @@ const HomeScreen = ({ navigation }:any) => {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
         <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
-        <Ionicons
-          name='notifications-outline'
-          size={25}
-          color='black'
-          style={{ marginTop: 10 }}
-          onPress={() => navigation.navigate('Notification')}
+        <IconBadge
+          MainElement={
+            <Ionicons
+              name='notifications-outline'
+              size={25}
+              color='black'
+              style={{ marginTop: 10 }}
+              onPress={() => navigation.navigate('Notification')}
+            />
+          }
+          BadgeElement={
+            <Text style={{color: 'white', fontSize: 12}}>{notificationCount}</Text>
+          }
+          IconBadgeStyle={
+            { width: 20, height: 20, backgroundColor: '#FF00EE' }
+          }
+          Hidden={notificationCount === 0}
         />
+        
       </View>
 
       <TouchableOpacity onPress={selectDay}>
