@@ -120,7 +120,6 @@ const HomeScreen = ({ navigation }:any) => {
           }
           Hidden={notificationCount === 0}
         />
-        
       </View>
 
       <TouchableOpacity onPress={selectDay}>
