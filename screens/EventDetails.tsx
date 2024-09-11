@@ -16,6 +16,7 @@ const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 const EventDetails = ({ route, navigation }: any) => {
     const { event } = route.params;
     const { user } = useContext(AuthContext);
+    const { socket } = useContext(SocketContext);
     const [participantsCount, setParticipantsCount] = useState(0);
     const [cancel, setCancel] = useState<boolean>(false);
     const [join, setJoin] = useState<boolean>(false);
@@ -95,6 +96,7 @@ const EventDetails = ({ route, navigation }: any) => {
             await _sync();
             setJoin(!join);
             checkIfJoined();
+            socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
         }catch(error){
             console.error("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
@@ -107,6 +109,7 @@ const EventDetails = ({ route, navigation }: any) => {
             await _sync();
             setJoin(!join);
             checkIfJoined();
+            socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
         }catch(error){
             console.error("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');

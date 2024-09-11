@@ -1,4 +1,5 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
 import { Event } from '../Types';
 
 // Function to get events hosted by a specific user
@@ -176,3 +177,38 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     console.error('Error unjoining event: ', error);
   }
 }
+
+ export const fetchEventsForSelectedDay = async (day: moment.MomentInput) => {
+  try {
+    const eventsRef = firestore().collection('events');
+    const querySnapshot = await eventsRef.get();
+
+    const fetchedEvents = querySnapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        const eventStartDate = moment(data.start_date.toDate()).local(); // Start date in local time
+        const eventEndDate = moment(data.end_date.toDate()).local(); // End date in local time
+
+        return {
+          id: doc.id,
+          name: data.name,
+          description: data.description,
+          image: data.image,
+          location: data.location,
+          start_time: eventStartDate.format('HH:mm'), // Format time in local time
+          start_date: eventStartDate.toISOString(),
+          end_time: eventEndDate.format('HH:mm'),
+          end_date: eventEndDate.toISOString(), // Keep the end date for comparison
+          guest: data.guest,
+          seats: data.seats,
+          host_id: data.host_id
+        };
+      })
+      .filter((event) => moment(event.start_date).isSameOrBefore(day, 'day') && moment(event.end_date).isSameOrAfter(day, 'day')) // Filter by date range
+      .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
+
+    return fetchedEvents;
+  } catch (error) {
+    console.error('Error fetching events:', error);
+  }
+};

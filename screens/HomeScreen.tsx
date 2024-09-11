@@ -7,6 +7,7 @@ import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
 import { AuthContext } from '../navigation/AuthProvider';
 import IconBadge from 'react-native-icon-badge';
+import { fetchEventsForSelectedDay } from '../database/firestore-service';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -17,7 +18,7 @@ const HomeScreen = ({ navigation }:any) => {
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    fetchEventsForSelectedDay(selectedDay);
+    fetchEvents();
   
     const unsubscribe = firestore()
       .collection('users')
@@ -32,45 +33,14 @@ const HomeScreen = ({ navigation }:any) => {
     return () => unsubscribe();
   }, [selectedDay, user.uid]);
 
+  const fetchEvents = async () => {
+    const events = await fetchEventsForSelectedDay(selectedDay);
+    setEvents(events);
+  };
+
   const selectDay = () => {
     setModalVisible(!modalVisible);
   };
-
-  const fetchEventsForSelectedDay = async (day) => {
-    try {
-      const eventsRef = firestore().collection('events');
-      const querySnapshot = await eventsRef.get();
-
-      const fetchedEvents = querySnapshot.docs
-        .map((doc) => {
-          const data = doc.data();
-          const eventStartDate = moment(data.start_date.toDate()).local(); // Start date in local time
-          const eventEndDate = moment(data.end_date.toDate()).local(); // End date in local time
-
-          return {
-            id: doc.id,
-            name: data.name,
-            description: data.description,
-            image: data.image,
-            location: data.location,
-            start_time: eventStartDate.format('HH:mm'), // Format time in local time
-            start_date: eventStartDate.toISOString(),
-            end_time: eventEndDate.format('HH:mm'),
-            end_date: eventEndDate.toISOString(), // Keep the end date for comparison
-            guest: data.guest,
-            seats: data.seats,
-            host_id: data.host_id
-          };
-        })
-        .filter((event) => moment(event.start_date).isSameOrBefore(day, 'day') && moment(event.end_date).isSameOrAfter(day, 'day')) // Filter by date range
-        .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
-
-      setEvents(fetchedEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  };
-
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
@@ -106,9 +76,9 @@ const HomeScreen = ({ navigation }:any) => {
           MainElement={
             <Ionicons
               name='notifications-outline'
-              size={25}
+              size={30}
               color='black'
-              style={{ marginTop: 10 }}
+              style={{ marginTop: 5 }}
               onPress={() => navigation.navigate('Notification')}
             />
           }
@@ -116,7 +86,7 @@ const HomeScreen = ({ navigation }:any) => {
             <Text style={{color: 'white', fontSize: 12}}>{notificationCount}</Text>
           }
           IconBadgeStyle={
-            { width: 20, height: 20, backgroundColor: '#FF00EE' }
+            { width: 20, height: 20, backgroundColor: '#FF0000' }
           }
           Hidden={notificationCount === 0}
         />
