@@ -1,5 +1,5 @@
-import {SQLiteDatabase, enablePromise, openDatabase} from 'react-native-sqlite-storage';
-import {Event} from './Types';
+import { SQLiteDatabase, enablePromise, openDatabase } from 'react-native-sqlite-storage';
+import { Event } from '../Types';
 const databaseName = 'db';
 
 enablePromise(true);

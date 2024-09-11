@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import SavedScreen from './screens/SavedScreen.tsx';
+//import SavedScreen from './screens/SavedScreen.tsx';
 import AddEvent from './screens/AddEvent.tsx';
 import NotificationScreen from './screens/NotificationScreen.tsx';
 import EventDetails from './screens/EventDetails.tsx';
@@ -42,11 +42,11 @@ const App = () => {
             headerShown: false
           }}
         />
-        <Tab.Screen
+        {/* <Tab.Screen
           name="Saved"
           component={SavedScreen}
           
-        />
+        /> */}
         <Tab.Screen
           name="Profile"
           component={ProfileScreen}

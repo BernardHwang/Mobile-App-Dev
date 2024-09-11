@@ -1,8 +1,8 @@
+import NetInfo from '@react-native-community/netinfo';
 import firestore from '@react-native-firebase/firestore';
 import { SQLiteDatabase } from 'react-native-sqlite-storage';
 import { cancelEventLocally, createEventLocally, editEventLocally } from './db-services';
-import { User, Event } from './Types';
-import NetInfo from '@react-native-community/netinfo';
+import { Event, User } from '../Types';
 
 // Check online or offline mode
 export const checkInternetConnection = async () => {

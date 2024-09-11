@@ -1,17 +1,14 @@
-import firestore from '@react-native-firebase/firestore';
-import storage from '@react-native-firebase/storage';
 import moment from 'moment';
 import React, { useContext, useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { launchImageLibrary } from 'react-native-image-picker';
-import { InputWithIconLabel } from '../UI';
-import { checkInternetConnection } from '../sync';
-import { updateEventOnline } from '../firestore-service';
-import { editEventLocally, getDBConnection } from '../db-services';
-import { AuthContext } from '../navigation/AuthProvider';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DatePicker from 'react-native-date-picker';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { InputWithIconLabel } from '../UI';
+import { editEventLocally, getDBConnection } from '../database/db-services';
+import { updateEventOnline } from '../database/firestore-service';
+import { AuthContext } from '../navigation/AuthProvider';
+import { checkInternetConnection } from '../database/sync';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
