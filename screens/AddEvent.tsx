@@ -11,7 +11,7 @@ import { InputWithIconLabel } from '../UI';
 import { createEventLocally, getDBConnection } from '../database/db-services';
 import { createEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
-import { checkInternetConnection } from '../database/sync';
+import { _sync, checkInternetConnection } from '../database/sync';
 
 const AddEvent = ({navigation}: any) => {
     const { user } = useContext(AuthContext);
@@ -244,9 +244,10 @@ const AddEvent = ({navigation}: any) => {
                 
                 await createEventOnline(eventData);
                 await createEventLocally(await getDBConnection(), eventData);
+                await _sync();
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'Saved' }],
+                    routes: [{ name: 'My Event' }],
                 });
             } catch (error) {
                 console.error('Error creating event:', error);

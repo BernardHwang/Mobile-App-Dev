@@ -8,7 +8,7 @@ import { InputWithIconLabel } from '../UI';
 import { editEventLocally, getDBConnection } from '../database/db-services';
 import { updateEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
-import { checkInternetConnection } from '../database/sync';
+import { _sync, checkInternetConnection } from '../database/sync';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
@@ -180,10 +180,11 @@ const EditEvent = ({navigation, route}: any) => {
         
                 await updateEventOnline(eventData)
                 await editEventLocally(await getDBConnection(), eventData)
+                await _sync();
         
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'Saved' }],
+                    routes: [{ name: 'My Event' }],
                 });
 
             } catch (error) {
@@ -197,10 +198,7 @@ const EditEvent = ({navigation, route}: any) => {
             <ScrollView keyboardShouldPersistTaps='always'>
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.reset({
-                                                                                        index: 0,
-                                                                                        routes: [{ name: 'Saved' }],
-                                                                                    })}}
+                        <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.goBack()}}
                     >
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>

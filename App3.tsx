@@ -7,17 +7,11 @@ import { AuthContext, AuthProvider } from "./navigation/AuthProvider";
 import AuthStack from './navigation/AuthStack';
 import { SocketProvider } from './navigation/SocketProvider';
 import NotificationListener from './database/NoficationGenerator';
-import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './database/sync';
+import { _sync } from './database/sync';
 
 const Routes = () => {
   const { user, setUser } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
-
-  const _sync = async() => {
-    await syncUsersData(await getDBConnection());
-    await syncEventsData(await getDBConnection());
-    await syncEventsParticipantsData(await getDBConnection());
-  }
 
   const handleAuthStateChanged = (user:any) => {
     setUser(user);
