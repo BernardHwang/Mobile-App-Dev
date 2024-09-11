@@ -109,7 +109,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     backgroundColor: '#fff',
-    height: 100
+    height: 100,
+    width: 350
   },
   noNotificationsText: {
     fontSize: 18,
