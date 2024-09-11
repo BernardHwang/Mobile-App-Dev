@@ -1,6 +1,6 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-
 import { Event } from '../Types';
+import moment from 'moment';
 
 // Function to get events hosted by a specific user
 export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
