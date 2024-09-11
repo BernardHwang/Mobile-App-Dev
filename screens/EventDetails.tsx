@@ -15,6 +15,7 @@ const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 const EventDetails = ({ route, navigation }: any) => {
     const { event } = route.params;
     const { user } = useContext(AuthContext);
+    const { socket } = useContext(SocketContext);
     const [participantsCount, setParticipantsCount] = useState(0);
     const [cancel, setCancel] = useState<boolean>(false);
     const [join, setJoin] = useState<boolean>(false);
