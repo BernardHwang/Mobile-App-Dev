@@ -106,9 +106,9 @@ const HomeScreen = ({ navigation }:any) => {
           MainElement={
             <Ionicons
               name='notifications-outline'
-              size={25}
+              size={30}
               color='black'
-              style={{ marginTop: 10 }}
+              style={{ marginTop: 5 }}
               onPress={() => navigation.navigate('Notification')}
             />
           }
@@ -116,7 +116,7 @@ const HomeScreen = ({ navigation }:any) => {
             <Text style={{color: 'white', fontSize: 12}}>{notificationCount}</Text>
           }
           IconBadgeStyle={
-            { width: 20, height: 20, backgroundColor: '#FF00EE' }
+            { width: 20, height: 20, backgroundColor: '#FF0000' }
           }
           Hidden={notificationCount === 0}
         />
