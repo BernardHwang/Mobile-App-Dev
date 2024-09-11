@@ -4,6 +4,8 @@ import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore'; // Import from @react-native-firebase
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Timestamp } from 'firebase-admin/firestore';
+import moment from 'moment';
 
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -23,8 +25,9 @@ const NotificationScreen = () => {
         id: doc.id,
         title: doc.data().title,
         message: doc.data().message,
-      }));
-
+        timestamp: doc.data().timestamp.toDate()
+      })).sort((a, b) => b.timestamp - a.timestamp);
+      
       setNotifications(notificationDocs);
     } catch (error) {
       console.error("Error fetching notifications: ", error);
@@ -75,8 +78,13 @@ const NotificationScreen = () => {
               renderRightActions={() => renderRightActions(item.id)}
             >
               <View style={styles.notificationItem}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.text}>{item.message}</Text>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={styles.title}>{item.title}</Text>
+                  <Text style={{fontSize: 12,}}>{moment(item.timestamp).format('D MMM HH:mm')}</Text>
+                </View>
+                <View>
+                  <Text style={styles.text}>{item.message}</Text>
+                </View>
               </View>
             </Swipeable>
           )}
@@ -111,6 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     height: 100,
     width: 350
+
   },
   noNotificationsText: {
     fontSize: 18,
