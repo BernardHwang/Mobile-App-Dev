@@ -1,5 +1,6 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import { Event } from './Types';
+import moment from 'moment';
 
 // Function to get events hosted by a specific user
 export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
@@ -145,7 +146,7 @@ export const cancelEventOnline = async(eventID: string) => {
 export const joinEvent = async(participant_id: string, event_id: string) => {
   try{
     const eventsParticipantsRef = await firestore().collection('events').doc(event_id).collection('eventParticipant');
-    await eventsParticipantsRef.doc(participant_id).set({participant_id: participant_id});
+    await eventsParticipantsRef.doc(participant_id).set({participant_id: participant_id, notification_status: false});
     console.log('Joined event successfully');
   }catch(error){
     console.error('Error joining event: ', error);
@@ -161,3 +162,38 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     console.error('Error unjoining event: ', error);
   }
 }
+
+ export const fetchEventsForSelectedDay = async (day: moment.MomentInput) => {
+  try {
+    const eventsRef = firestore().collection('events');
+    const querySnapshot = await eventsRef.get();
+
+    const fetchedEvents = querySnapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        const eventStartDate = moment(data.start_date.toDate()).local(); // Start date in local time
+        const eventEndDate = moment(data.end_date.toDate()).local(); // End date in local time
+
+        return {
+          id: doc.id,
+          name: data.name,
+          description: data.description,
+          image: data.image,
+          location: data.location,
+          start_time: eventStartDate.format('HH:mm'), // Format time in local time
+          start_date: eventStartDate.toISOString(),
+          end_time: eventEndDate.format('HH:mm'),
+          end_date: eventEndDate.toISOString(), // Keep the end date for comparison
+          guest: data.guest,
+          seats: data.seats,
+          host_id: data.host_id
+        };
+      })
+      .filter((event) => moment(event.start_date).isSameOrBefore(day, 'day') && moment(event.end_date).isSameOrAfter(day, 'day')) // Filter by date range
+      .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
+
+    return fetchedEvents;
+  } catch (error) {
+    console.error('Error fetching events:', error);
+  }
+};
