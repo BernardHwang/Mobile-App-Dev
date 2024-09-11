@@ -73,55 +73,138 @@ eventsCollectionRef.onSnapshot(async snapshot => {
     });
 });
 
-//Set up a global listener for participants in events
-eventsCollectionRef.onSnapshot(async snapshot => {
-    snapshot.docChanges().forEach(async (change) => {
-        const eventId = change.doc.id;
-        const eventParticipantsRef = eventsCollectionRef.doc(eventId).collection('eventParticipant');
 
-        try {
-            const participantSnapshot = await eventParticipantsRef.get();
-            // Ensure the participant subcollection exists
-            if (!participantSnapshot.empty) {
-                // Listen for real-time changes in the participant subcollection
-                eventParticipantsRef.onSnapshot(async (participantSnapshot) => {
-                    participantSnapshot.docChanges().forEach(async (participantChange) => {
-                        const userId = participantChange.doc.id;
 
-                        const userData = await getUserData(userId);
-                        const eventData = await getEventData(eventId);
-
-                        if (!userData || !eventData) return;
-
-                        let notification = {};
-
-                        if (participantChange.type === 'added') {
-                            notification = {
-                                title: 'Successfully Joined Event',
-                                message: `Congratulations ${userData.name}, you have joined the event: ${eventData.name}.`
-                            };
-                        } else if (participantChange.type === 'removed') {
-                            notification = {
-                                title: 'Left Event',
-                                message: `You have left the event: ${eventData.name}.`
-                            };
-                        }
-                        // Emit the notification for participation changes
-                        console.log(notification);
-                        io.emit('participationNotification', { notification, userId });
-                    });
-                });
-            } else {
-                console.log(`No participants found for event ${eventId}`);
-            }
-        } catch (error) {
-            console.error(`Error accessing participants for event ${eventId}:`, error);
-        }
-    });
-});
 
 io.on('connection', (socket) => {
     console.log('A user connected');
+
+    // Set up a listener for participants in events
+    socket.on('joinEvent', async ({eventId, userId}) => {
+        try {
+            const userData = await getUserData(userId);
+            const eventData = await getEventData(eventId);
+    
+            if (!userData || !eventData) {
+                console.error('Invalid user or event data.');
+                return;
+            }
+    
+            // Check if the user's participant document exists
+            const participantDocRef = await eventsCollectionRef
+                .doc(eventId)
+                .collection('eventParticipant')
+                .doc(userId)
+                .get();
+    
+            let notification = {}; 
+    
+            if (participantDocRef.exists) {
+                // User successfully joined the event
+                notification = {
+                    title: 'Successfully Joined Event',
+                    message: `Congratulations ${userData.name}, you have joined the event: ${eventData.name}.`
+                };
+            } else {
+                // User failed to join the event
+                notification = {
+                    title: 'Failed to Join Event',
+                    message: `Unfortunately ${userData.name}, you failed to join the event: ${eventData.name}.`
+                };
+            }
+    
+            // Emit the notification for participation changes (either success or failure)
+            console.log(notification);
+            io.emit('participationNotification', { notification, userId });
+    
+        } catch (error) {
+            console.error('Error checking for user document:', error);
+        }
+    });
+
+    socket.on('unjoinEvent', async ({eventId, userId}) => {
+        try {
+            const userData = await getUserData(userId);
+            const eventData = await getEventData(eventId);
+    
+            if (!userData || !eventData) {
+                console.error('Invalid user or event data.');
+                return;
+            }
+    
+            // Check if the user's participant document exists
+            const participantDocRef = await eventsCollectionRef
+                .doc(eventId)
+                .collection('eventParticipant')
+                .doc(userId)
+                .get();
+    
+            let notification = {}; 
+    
+            if (!participantDocRef.exists) {
+                // User successfully left the event
+                notification = {
+                    title: 'Successfully Left Event',
+                    message: `Congratulations ${userData.name}, you left the event: ${eventData.name}.`
+                };
+            } else {
+                // User failed to leave the event
+                notification = {
+                    title: 'Failed to Leave Event',
+                    message: `Unfortunately ${userData.name}, you failed to leave the event: ${eventData.name}.`
+                };
+            }
+    
+            // Emit the notification for participation changes (either success or failure)
+            console.log(notification);
+            io.emit('participationNotification', { notification, userId });
+    
+        } catch (error) {
+            console.error('Error checking for user document:', error);
+        }
+    });
+
+    socket.on('eventNotificationStatus', async ({eventId, userId}) => {
+        try {
+            const userData = await getUserData(userId);
+            const eventData = await getEventData(eventId);
+    
+            if (!userData || !eventData) {
+                console.error('Invalid user or event data.');
+                return;
+            }
+    
+            // Check if the user's participant document exists
+            const participantDocRef = await eventsCollectionRef
+                .doc(eventId)
+                .collection('eventParticipant')
+                .doc(userId)
+                .get();
+    
+            let notification = {}; 
+    
+            if (!participantDocRef.exists) {
+                // User successfully left the event
+                notification = {
+                    title: 'Successfully Left Event',
+                    message: `Congratulations ${userData.name}, you left the event: ${eventData.name}.`
+                };
+            } else {
+                // User failed to leave the event
+                notification = {
+                    title: 'Failed to Leave Event',
+                    message: `Unfortunately ${userData.name}, you failed to leave the event: ${eventData.name}.`
+                };
+            }
+    
+            // Emit the notification for participation changes (either success or failure)
+            console.log(notification);
+            io.emit('participationNotification', { notification, userId });
+    
+        } catch (error) {
+            console.error('Error checking for user document:', error);
+        }
+    });
 
     socket.on('message', (msg) => {
         console.log('Message received:', msg);
