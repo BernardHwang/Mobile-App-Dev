@@ -1,17 +1,17 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DatePicker from 'react-native-date-picker'
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
+import React, { useContext, useEffect, useState } from 'react';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DatePicker from 'react-native-date-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { launchImageLibrary } from 'react-native-image-picker';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { InputWithIconLabel } from '../UI';
-import { createEventOnline } from '../firestore-service';
-import { createEventLocally, getDBConnection } from '../db-services';
-import { checkInternetConnection } from '../sync';
+import { createEventLocally, getDBConnection } from '../database/db-services';
+import { createEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
+import { checkInternetConnection } from '../database/sync';
 
 const AddEvent = ({navigation}: any) => {
     const { user } = useContext(AuthContext);

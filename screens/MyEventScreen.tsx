@@ -1,11 +1,11 @@
-import React,{ useState, useRef, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import TabButtons, {TabButtonType} from './MyEventScreenButtons';
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
+import { getDBConnection, getHostEventsByUserIDOffline, getJoinEventsByUserIDOffline } from '../database/db-services';
+import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
-import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../firestore-service';
-import { getHostEventsByUserIDOffline, getJoinEventsByUserIDOffline, getDBConnection} from '../db-services';
+import TabButtons, { TabButtonType } from './MyEventScreenButtons';
 
 
 export enum CustomTab {

@@ -1,12 +1,12 @@
-import React, { useState, useRef, useContext, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Animated, Modal, Alert, FlatList } from 'react-native';
+import moment from 'moment';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import { cancelEventLocally, getDBConnection } from '../database/db-services';
+import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
-import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../firestore-service';
-import { cancelEventLocally, getDBConnection } from '../db-services';
-import moment from 'moment';
-import { Avatar } from 'react-native-elements';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;

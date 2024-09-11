@@ -1,14 +1,13 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import auth from "@react-native-firebase/auth";
-import { AuthProvider } from "./navigation/AuthProvider";
-import { AuthContext } from './navigation/AuthProvider';
-import { SocketProvider } from './navigation/SocketProvider';
-import NotificationListener from './NoficationGenerator'
-import AuthStack from './navigation/AuthStack';
+import { NavigationContainer } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
+import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection } from './database/db-services';
 import AppStack from './navigation/AppStack';
-import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from './db-services';
-import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './sync';
+import { AuthContext, AuthProvider } from "./navigation/AuthProvider";
+import AuthStack from './navigation/AuthStack';
+import { SocketProvider } from './navigation/SocketProvider';
+import NotificationListener from './database/NoficationGenerator';
+import { syncEventsData, syncEventsParticipantsData, syncUsersData } from './database/sync';
 
 const Routes = () => {
   const { user, setUser } = useContext(AuthContext);
