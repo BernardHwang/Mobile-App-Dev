@@ -82,6 +82,7 @@ const EventDetails = ({ route, navigation }: any) => {
             await joinEvent(participant_id, event_id);
             setJoin(!join);
             checkIfJoined();
+            socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
         }catch(error){
             console.error("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
@@ -93,6 +94,7 @@ const EventDetails = ({ route, navigation }: any) => {
             await unjoinEvent(participant_id, event_id);
             setJoin(!join);
             checkIfJoined();
+            socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
         }catch(error){
             console.error("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
