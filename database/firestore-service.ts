@@ -1,6 +1,6 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { Event } from './Types';
-import moment from 'moment';
+
+import { Event } from '../Types';
 
 // Function to get events hosted by a specific user
 export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
@@ -20,8 +20,8 @@ export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[
         
         return eventsData;
     } catch (error) {
-        console.error('Failed to get host events: ', error);
-        throw new Error('Failed to get host events');
+        console.error('Failed to get host events online: ', error);
+        throw new Error('Failed to get host events online');
     }
 };
 
@@ -50,6 +50,7 @@ export const getJoinEventsByUserIDOnline = async (user_id: string): Promise<any[
   }
 };
 
+//Get participants
 export const getEventsParticipantsByEventID = async (event_id: string): Promise<any[]> => {
   try {
       const eventParticipantsRef = firestore().collection('events').doc(event_id).collection('eventParticipant');
@@ -72,6 +73,7 @@ export const getEventsParticipantsByEventID = async (event_id: string): Promise<
   }
 };
 
+//Get participant details
 export const getParticipantsByEventID = async (event_id: string): Promise<any[]> => {
   try {
     const userRef = firestore().collection('users');
@@ -136,7 +138,20 @@ export const updateEventOnline = async(eventData: Event) => {
 
 export const cancelEventOnline = async(eventID: string) => {
   try{
-    await firestore().collection('events').doc(eventID).delete();
+    const docRef = firestore().collection('events').doc(eventID);
+    const deleteSubcollection = async (collectionPath) => {
+      const subcollectionRef = firestore().collection(collectionPath);
+      const querySnapshot = await subcollectionRef.get();
+      const batch = firestore().batch();
+      
+      querySnapshot.forEach(doc => {
+          batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+    };
+    await deleteSubcollection(`events/${eventID}/eventParticipant`);
+    docRef.delete();
     console.log('Event cancelled successfully!');
   }catch(error){
     console.error('Error canceling event: ', error);

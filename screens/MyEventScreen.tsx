@@ -6,17 +6,17 @@ import { getDBConnection, getHostEventsByUserIDOffline, getJoinEventsByUserIDOff
 import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import TabButtons, { TabButtonType } from './MyEventScreenButtons';
-
+import { _sync, checkInternetConnection } from '../database/sync';
 
 export enum CustomTab {
   Tab1,
   Tab2,
 }
   
-  const MyEventScreen = ({ navigation }:any) => {
+const MyEventScreen = ({ navigation }:any) => {
   const [selectedTab,setSelectedTab] = useState<CustomTab>(CustomTab.Tab1);
-  const [joinedEvents, setJoinedEvents] = useState([]);
-  const [hostedEvents, setHostedEvents] = useState([]);
+  const [joinedEvents, setJoinedEvents] = useState<any[]>([]);
+  const [hostedEvents, setHostedEvents] = useState<any[]>([]);
   const { user } = useContext(AuthContext);
   const pagerRef = useRef<PagerView>(null); // Ref to control PagerView
   const tabPositionX = useSharedValue(0); // Shared value for tab position
@@ -38,40 +38,32 @@ export enum CustomTab {
     tabPositionX.value = withTiming(index * buttonWidth);
   };
 
-  const fetchEventsForHost = async () => {
-    try {
+  const fetchEventsForHost = async () => {                                                  
+    const connected = await checkInternetConnection();
+    if (connected) {
       const hostEventOnline = await getHostEventsByUserIDOnline(user.uid);
       setHostedEvents(hostEventOnline);
-    } catch (error) {
-      console.error('Error fetching events online:', error);
-      try{
-        const hostEventOffline = await getHostEventsByUserIDOffline(await getDBConnection(),user.uid);
-        setHostedEvents(hostEventOffline);
-      }catch (error) {
-        console.error('Error fetching events offline:', error);
-      }
+      console.log('Fetch host event online');
+    } else {
+      const hostEventOffline = await getHostEventsByUserIDOffline(await getDBConnection(),user.uid);
+      setHostedEvents(hostEventOffline);
+      console.log('Fetch host event offline');
     }
-      
   };
 
   const fetchEventsForJoin = async () => {                                                  
-    try {
+    const connected = await checkInternetConnection();
+    if (connected) {
       const joinEventOnline = await getJoinEventsByUserIDOnline(user.uid);
-      if (joinEventOnline && joinEventOnline.length > 0) {
-        setJoinedEvents(joinEventOnline);
-      }else {
-        throw new Error('No events found online, falling back to offline.');
-      }
-    } catch (onlineError) {
-      console.warn('Error fetching events online:', onlineError);
-      try {
-        const joinEventOffline = await getJoinEventsByUserIDOffline(await getDBConnection(), user.uid);
-        setJoinedEvents(joinEventOffline);
-      } catch (offlineError) {
-        console.error('Error fetching events offline:', offlineError);
-      }
+      setJoinedEvents(joinEventOnline);
+      console.log('Fetch join event online');        
+    } else {
+      const joinEventOffline = await getJoinEventsByUserIDOffline(await getDBConnection(), user.uid);
+      setJoinedEvents(joinEventOffline);
+      console.log('Fetch join event offline');
     }
   };
+  
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
@@ -96,8 +88,10 @@ export enum CustomTab {
 
   useEffect(() => {
     if (selectedTab === CustomTab.Tab1) {
+      _sync();
       fetchEventsForJoin();
     } else if (selectedTab === CustomTab.Tab2) {
+      _sync();
       fetchEventsForHost();
     }
   }, [selectedTab]); // Runs when selectedTab changes

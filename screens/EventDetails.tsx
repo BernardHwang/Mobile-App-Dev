@@ -4,9 +4,10 @@ import { Alert, Animated, Dimensions, FlatList, Modal, StyleSheet, Text, Touchab
 import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { cancelEventLocally, getDBConnection } from '../database/db-services';
+import { cancelEventLocally, getDBConnection, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
 import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
+import { _sync, checkInternetConnection } from '../database/sync';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
@@ -21,24 +22,33 @@ const EventDetails = ({ route, navigation }: any) => {
     const [join, setJoin] = useState<boolean>(false);
     const [joinedUsers, setJoinedUsers] = useState<any[]>([]);
     const [showSplitButtons, setShowSplitButtons] = useState<boolean>(false);
-    
+
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
         try {
-            const participants = await getEventsParticipantsByEventID(event.id);
-            const icons = await getParticipantsByEventID(event.id);
-            const isParticipant = participants.some(p => p.participant_id === user.uid);
-            setJoin(isParticipant);
-            setJoinedUsers(icons);
-            setParticipantsCount(participants.length);
-            setShowSplitButtons(isParticipant);
-            
+          const connected = await checkInternetConnection();
+      
+          // Use online or offline data source based on connection status
+          const participants = connected
+            ? await getEventsParticipantsByEventID(event.id)
+            : await getEventsParticipantsByEventIDOffline(await getDBConnection(), event.id);
+      
+          const icons = connected
+            ? await getParticipantsByEventID(event.id)
+            : await getParticipantsByEventIDOffline(await getDBConnection(), event.id);
+      
+          const isParticipant = participants.some(p => p.participant_id === user.uid);
+      
+          // Update state
+          setJoin(isParticipant);
+          setJoinedUsers(icons);
+          setParticipantsCount(participants.length);
+          setShowSplitButtons(isParticipant);
         } catch (error) {
-            console.error("Error fetching participants: ", error);
+          console.error("Error fetching participants: ", error);
         }
-    };
-
-    
+      };
+      
 
     useEffect(() => {checkIfJoined()}, [event.id, user.uid]);
 
@@ -63,15 +73,17 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const cancelEvent = async (id: string) => {
         try{
+            const db = await getDBConnection();
             await cancelEventOnline(id);
-            await cancelEventLocally(await getDBConnection(), id);
+            await cancelEventLocally(db, id);
+            await _sync();
             setCancel(false);
 
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Home' }],
             });
-        } catch(error){
+        } catch(error) {
             console.error("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
         }
@@ -81,6 +93,7 @@ const EventDetails = ({ route, navigation }: any) => {
     const joinEventFunction = async (participant_id: string, event_id: string) => {
         try{
             await joinEvent(participant_id, event_id);
+            await _sync();
             setJoin(!join);
             checkIfJoined();
             socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
@@ -93,6 +106,7 @@ const EventDetails = ({ route, navigation }: any) => {
     const unjoinEventFunction = async (participant_id: string, event_id: string) => {
         try{
             await unjoinEvent(participant_id, event_id);
+            await _sync();
             setJoin(!join);
             checkIfJoined();
             socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
