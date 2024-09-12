@@ -8,6 +8,7 @@ import { cancelEventLocally, getDBConnection, getEventsParticipantsByEventIDOffl
 import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
+import { SocketContext } from '../navigation/SocketProvider';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
