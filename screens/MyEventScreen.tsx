@@ -216,6 +216,26 @@ const MyEventScreen = ({ navigation }:any) => {
       fontSize: 16,
       color: '#888',
     },
+    eventInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    eventTextContainer: {
+      flex: 1,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statusIcon: {
+      marginRight: 5,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
   });
 
 export default MyEventScreen;
