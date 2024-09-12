@@ -31,6 +31,7 @@ const EventDetails = ({ route, navigation }: any) => {
     const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
     const [loading, setLoading] = useState(true);
     const [isBellOff, setIsBellOff] = useState(true);
+    const [isEventEnded, setIsEventEnded] = useState<boolean>(false);
     
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
@@ -63,6 +64,10 @@ const EventDetails = ({ route, navigation }: any) => {
             const theEvent = await getEventByID(eventID);
             if (theEvent){
                 setEvent(theEvent);
+                console.log('Updated Event Data: ', event);
+                const currentTime = moment(); // Get current time
+                const eventEndTime = moment(convertTimestampToDate(theEvent.end_date));
+                setIsEventEnded(eventEndTime.isBefore(currentTime));
                 return theEvent;
             }
         } catch (error) {
@@ -289,7 +294,7 @@ const EventDetails = ({ route, navigation }: any) => {
             
             <View style={styles.detailFooter}>
                 <TouchableOpacity onPress={() => {setCancel(true)}} style={styles.footerBtn} >
-                    <Text style={styles.footerBtnTxt}>Cancel Event</Text>
+                    <Text style={styles.footerBtnTxt}>{isEventEnded ? "Delete Event" : "Cancel Event"}</Text>
                 </TouchableOpacity>
             </View>
             
@@ -306,9 +311,24 @@ const EventDetails = ({ route, navigation }: any) => {
                     </TouchableOpacity>
                 </View>
                 ) : (
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);joinEventFunction(user.uid, event.id)}} style={styles.footerBtn}>
+                    event && (
+                    <TouchableOpacity onPress={() => {
+                        if (event.seats - participantsCount > 0) {
+                            setShowSplitButtons(true);
+                            joinEventFunction(user.uid, event.id);
+                        }
+                    }}
+                    style={[
+                        styles.footerBtn, 
+                        { 
+                            backgroundColor: event.seats - participantsCount === 0 ? 'grey' : '#3e2769',
+                            opacity: event.seats - participantsCount === 0 ? 0.7 : 1, // Optional: dim the button
+                        }
+                    ]}
+                    disabled={event.seats - participantsCount === 0} >
                         <Text style={styles.footerBtnTxt}>{join ? "Unjoin" : "Join"}</Text>
                     </TouchableOpacity>
+                    )
                 )}
             </View>
             }
