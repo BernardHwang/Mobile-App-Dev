@@ -104,6 +104,8 @@ const MyEventScreen = ({ navigation }:any) => {
     const unsubscribe = navigation.addListener('focus', async () => {
       if (selectedTab === CustomTab.Tab2) {
         await fetchEventsForHost();  // Ensure hosted events are refreshed on focus
+      } else if (selectedTab === CustomTab.Tab1){
+        await fetchEventsForJoin();
       }
     });
   

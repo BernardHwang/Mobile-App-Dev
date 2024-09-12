@@ -9,22 +9,27 @@ import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getPartic
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
 const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 
 const EventDetails = ({ route, navigation }: any) => {
-    // const { event } = route.params;
+    
     const { user } = useContext(AuthContext);
     const { socket } = useContext(SocketContext);
+
     const [participantsCount, setParticipantsCount] = useState(0);
     const [cancel, setCancel] = useState<boolean>(false);
     const [join, setJoin] = useState<boolean>(false);
     const [joinedUsers, setJoinedUsers] = useState<any[]>([]);
     const [showSplitButtons, setShowSplitButtons] = useState<boolean>(false);
-    const [event, setEvent] = useState<any>(null); //get event by id (to be passed to event details)
+    const [event, setEvent] = useState<any>(null); 
     const [eventID, setEventID] = useState(route.params.event_id);
+    const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
+    const [loading, setLoading] = useState(true);
 
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
@@ -51,31 +56,13 @@ const EventDetails = ({ route, navigation }: any) => {
           console.error("Error fetching participants: ", error);
         }
       };
-      
-
-    // useEffect(() => {
-    //     const fetchEventData = async () => {
-    //         try {
-    //             // Fetch the event data
-    //             const theEvent = await getEventByID(eventID);
-    //             // Set the event state
-    //             setEvent(theEvent);
-    //         } catch (error) {
-    //             console.error("Error fetching event data:", error);
-    //         }
-    //     };
-    
-    //     fetchEventData();
-    //     checkIfJoined();
-    // }, [eventID]); 
 
     const fetchEventData = async () => {
         try {
             const theEvent = await getEventByID(eventID);
             if (theEvent){
                 setEvent(theEvent);
-                console.log('Updated Event Data: ', event);
-                return theEvent; 
+                return theEvent;
             }
         } catch (error) {
             console.error("Error fetching event data:", error);
@@ -90,6 +77,28 @@ const EventDetails = ({ route, navigation }: any) => {
     
         return unsubscribe;
     }, [navigation, eventID]);
+    
+    useEffect(() => {
+        // Function to fetch coordinates based on the location string
+        const fetchCoordinates = async () => {
+            if (!event || !event.location) return;
+            try {
+                const response = await axios.get(
+                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(event.location)}&key=${'AIzaSyDfYC_0IwQ1K2Ua07Ix1vYMaSP-eafAmbw'}`
+                );
+                const locationData = response.data.results[0].geometry.location;
+                setCoordinates({
+                    latitude: locationData.lat,
+                    longitude: locationData.lng,
+                });
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching location data:', error);
+            }
+        };
+
+        fetchCoordinates();
+    }, [event]);
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const imgHeight = scrollY.interpolate({
@@ -245,6 +254,28 @@ const EventDetails = ({ route, navigation }: any) => {
                 <Text style={styles.paragraph}>
                     {event.description}
                 </Text>
+
+                <View style={styles.mapContainer}>
+                    {!loading ? (
+                        <MapView
+                            style={{ width: '100%', height: 300 }}
+                            initialRegion={{
+                                latitude: coordinates.latitude,
+                                longitude: coordinates.longitude,
+                                latitudeDelta: 0.01,
+                                longitudeDelta: 0.01,
+                            }}
+                        >
+                            <Marker
+                                coordinate={coordinates}
+                                title={event.name}
+                                description={event.location}
+                            />
+                        </MapView>
+                    ) : (
+                        <Text>Loading map...</Text>
+                    )}
+                </View>
                 </>
                 ):(
                     <Text>Loading event details...</Text>
@@ -266,7 +297,7 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(false)}} style={styles.remindBtn}>
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(true)}} style={styles.remindBtn}>
                         <MaterialCommunityIcons name="bell-ring-outline" size={23} color='#3e2769'/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
@@ -496,5 +527,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2, // Ensure it appears above other content
-        }
+    },
+    mapContainer: {
+        marginTop: 40
+    },
+    maps: {
+        width: '100%',
+        height: 300,
+        borderRadius: 10,
+    }
 });
