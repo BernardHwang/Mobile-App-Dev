@@ -30,7 +30,8 @@ const EventDetails = ({ route, navigation }: any) => {
     const [eventID, setEventID] = useState(route.params.event_id);
     const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
     const [loading, setLoading] = useState(true);
-
+    const [isBellOff, setIsBellOff] = useState(true);
+    
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
         try {
@@ -224,12 +225,12 @@ const EventDetails = ({ route, navigation }: any) => {
                                 )}
                             />
                         ) : (
-                    <Text style={styles.paragraph}>No participants found for current event</Text>
+                    <Text style={styles.location}>No participants found for current event</Text>
                 )}
                     <Text style={styles.title}>{event.name} </Text>
                     <View style={styles.locationWrapper}>
                         <Ionicons name="location-sharp" size={18} color='#3e2769' />
-                        <Text style={styles.paragraph}>{event.location}</Text>
+                        <Text style={styles.location}>{event.location}</Text>
                     </View>
                     <Text style={styles.seats}>{event.seats - participantsCount} Seats Left</Text>
                     <View style={styles.timeContainer}>
@@ -250,8 +251,8 @@ const EventDetails = ({ route, navigation }: any) => {
                     </View>
                 </View>
 
-                <Text style={{ marginLeft: 10, fontSize: 25, fontWeight: '400', color: 'black', marginBottom: 10 }}>Description</Text>
-                <Text style={styles.paragraph}>
+                <Text style={{ marginLeft: 20, fontSize: 25, fontWeight: '400', color: 'black', marginBottom: 10 }}>Description</Text>
+                <Text style={styles.description}>
                     {event.description}
                 </Text>
 
@@ -297,8 +298,8 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true)}} style={styles.remindBtn}>
-                        <MaterialCommunityIcons name="bell-ring-outline" size={23} color='#3e2769'/>
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff)}} style={styles.remindBtn}>
+                        <MaterialCommunityIcons name={isBellOff ? "bell-off-outline":"bell-ring-outline"} size={23} color='#3e2769'/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
                         <Text style={styles.footerBtnTxt}>Unjoin Event</Text>
@@ -397,9 +398,17 @@ const styles = StyleSheet.create({
         color: 'black',
         letterSpacing: 0.5,
     },
-    paragraph: {
+    location: {
+        marginRight: 10,
         fontSize: 15,
         marginLeft: 10,
+        color: '#3e2769',
+        letterSpacing: 0.5,
+    },
+    description: {
+        marginRight: 20,
+        fontSize: 15,
+        marginLeft: 20,
         color: '#3e2769',
         letterSpacing: 0.5,
     },
