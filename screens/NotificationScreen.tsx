@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
   },
   title: {
     fontSize: 18,
@@ -112,13 +111,12 @@ const styles = StyleSheet.create({
   notificationItem: {
     flex: 1,
     padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#ccc',
     borderRadius: 5,
     backgroundColor: '#fff',
     height: 100,
-    width: Dimensions.get('window').width - 45
+    width: Dimensions.get('window').width
 
   },
   noNotificationsText: {
