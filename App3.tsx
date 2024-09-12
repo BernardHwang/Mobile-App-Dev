@@ -9,7 +9,7 @@ import { createEventsParticipantsTable, createEventsTable, createUsersTable, get
 
 const Routes = () => {
 
-  const { user, setUser } = useContext(AuthContext);
+  const { user, setUser, logout } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
 
   const handleAuthStateChanged = (user:any) => {
@@ -47,7 +47,7 @@ const App = () => {
 
   return (
     <AuthProvider>
-      <Routes />
+        <Routes />
     </AuthProvider>
   );
 }

@@ -8,37 +8,87 @@ import {AppButton, InputWithLabel} from '../UI';
 
 //TODO: Precise Error message
 const LoginScreen = ({navigation, route}: any) => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
 
-    const {login} = useContext(AuthContext);
+    const { login, loading } = useContext(AuthContext);
+
+    const [inputs, setInputs] = useState({
+        email: '',
+        password: '',
+    });
+
+    const [errors, setErrors] = useState({
+        emailErr: '',
+        passwordErr: '',
+    });
+
+    const validation = (field: string) => {
+        let isValid = true;
+
+        //* Handle client side input error */
+        switch (field) {
+            case "email":
+                if (!inputs.email) { //For email
+                    handleError('Email field cannot be empty', 'emailErr');
+                    isValid = false;
+                } else if (!inputs.email.match(/\S+@\S+\.\S+/)) {
+                    handleError('Invalid email format', 'emailErr');
+                    isValid = false;
+                }
+                break;
+            case "password": //For password
+                if (!inputs.password) {
+                    handleError('Password field cannot be empty', 'passwordErr');
+                    isValid = false;
+                }
+                break;
+        }
+    }
+
+    const handleOnChange = (text: any, input: any) => {
+        setInputs(prevState => ({ ...prevState, [input]: text }));
+    }
+
+    const handleError = (error: any, input: any) => {
+        setErrors(prevState => ({ ...prevState, [input]: error }));
+    };
 
     return (
         <>
-        <View style={{flex: 1, justifyContent: "center", backgroundColor: "#E6E6FA"}}>
+            <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#E6E6FA", paddingTop: 50, paddingHorizontal: 20 }}>
             <Text style={styles.header}>Welcome Back</Text>
             <Text style={styles.description}>Please sign in to continue</Text>
             <KeyboardAvoidingView behavior='padding'>
+
                 <InputWithLabel
-                    label = "Email"
-                    value = {email}
-                    placeholder = "Enter email"
-                    autoCapitalize = "none"
-                    onChangeText={(input:any) => setEmail(input)}
+                    label="Email"
+                    iconName="email-outline"
+                    placeholder="Enter email address"
+                    value={inputs.email}
+                    error={errors.emailErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'email')}
+                    onFocus={()=> handleError(null, 'emailErr')}
+                    onBlur={() => validation("email")}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
                 />
 
                 <InputWithLabel
                     label="Password"
-                    secureTextEntry={true}
-                    value={password}
+                    iconName="lock-outline"
                     placeholder="Enter password"
+                    value={inputs.password}
+                    error={errors.passwordErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'password')}
+                    onFocus={()=> handleError(null, 'passwordErr')}
+                    onBlur={() => validation("password")}
                     autoCapitalize="none"
-                    onChangeText={(input: any) => setPassword(input)}
+                    password
                 />
 
                 <AppButton
                     title = "Login"
-                    onPress = {()=>{login(email,password)}}
+                    onPress = {()=>{login(inputs.email,inputs.password)}}
+                    disabled = {loading}
                 />
             </KeyboardAvoidingView>
             <View style={{flex: .1, backgroundColor: "#E6E6FA", flexDirection: "row", marginLeft: 30 }}>

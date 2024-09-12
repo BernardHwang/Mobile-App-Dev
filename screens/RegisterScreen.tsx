@@ -1,65 +1,131 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, Button, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, Alert, Button, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import auth from "@react-native-firebase/auth";
 import { AuthContext } from '../navigation/AuthProvider';
 import { AppButton, InputWithLabel } from '../UI';
 
 const RegisterScreen = ({navigation, route}: any) => {
-    const {register} = useContext(AuthContext);
+    const {register, loading} = useContext(AuthContext);
 
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [phone, setPhone] = useState("");
-    const [password, setPassword] = useState("");
-
-    //Validation
-    const [data, setData] = useState({
-        username: '',
+    const [inputs, setInputs] = useState({
+        email:'',
+        name: '',
+        phone: '',
         password: '',
-        check_textInputChange: false,
-        secureTextEntry: true,
-        isValidPassword: true,
     });
+
+    const [errors, setErrors] = useState({
+        emailErr: '',
+        nameErr: '',
+        phoneErr: '',
+        passwordErr: '',
+    });
+
+    const validation = (field:string) => {
+        let isValid = true;
+
+        //* Handle client side input error */
+        switch(field){
+            case "email":
+                if (!inputs.email) { //For email
+                    handleError('Email field cannot be empty', 'emailErr');
+                    isValid = false;
+                } else if (!inputs.email.match(/\S+@\S+\.\S+/)) {
+                    handleError('Invalid email format', 'emailErr');
+                    isValid = false;
+                }
+                break;
+            case "name": //For name
+                if (!inputs.name) {
+                    handleError('Name field cannot be empty', 'nameErr');
+                    isValid = false;
+                } else if (!inputs.name.match(/^[A-Za-z][A-Za-z\s\-]*[A-Za-z]$/)) {
+                    handleError('Invalid name format', 'nameErr');
+                    isValid = false;
+                }
+                break;
+            case "phone": //For phone
+                if (!inputs.phone) {
+                    handleError('Phone field cannot be empty', 'phoneErr');
+                    isValid = false;
+                } else if (!inputs.phone.match(/^\d{10,11}$/)) {
+                    handleError('Invalid phone format. Must be 10 or 11 digits only.', 'phoneErr');
+                    isValid = false;
+                }
+                break;
+            case "password": //For password
+                if (!inputs.password) {
+                    handleError('Password field cannot be empty', 'passwordErr');
+                    isValid = false;
+                }
+                break;
+        }
+    }
+
+    const handleOnChange = (text: any, input: any) => {
+        setInputs(prevState => ({ ...prevState, [input]: text}));
+    }
+
+    const handleError = (error:any, input:any) => {
+        setErrors(prevState => ({...prevState, [input]: error}));
+    };
 
     return (
         <>
-        <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#E6E6FA" }}>
+            <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#E6E6FA", paddingTop: 50, paddingHorizontal: 15}}>
             <Text style={styles.header}>Create Account</Text>
             <Text style={styles.description}>Please sign up to login</Text>
             <KeyboardAvoidingView behavior='padding'>
                 <InputWithLabel
-                    label="Name"
-                    value={name}
-                    placeholder="Enter name"
-                    autoCapitalize="words"
-                    onChangeText={(input: any) => setName(input)}
-                />
-                <InputWithLabel
                     label="Email"
-                    value={email}
-                    placeholder="Enter email"
+                    iconName="email-outline"
+                    placeholder="Enter email address"
+                    value={inputs.email}
+                    error={errors.emailErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'email')}
+                    onFocus={()=> handleError(null, 'emailErr')}
+                    onBlur={() => validation("email")}
                     autoCapitalize="none"
-                    onChangeText={(input: any) => setEmail(input)}
+                    keyboardType="email-address"
                 />
                 <InputWithLabel
-                    label="Phone number"
-                    value={phone}
-                    placeholder="Enter phone"
-                    onChangeText={(input: any) => setPhone(input)}
+                    label="Name"
+                    iconName="account-outline"
+                    placeholder="Enter name"
+                    value={inputs.name}
+                    error={errors.nameErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'name')}
+                    onFocus={()=> handleError(null, 'nameErr')}
+                    onBlur={() => validation("name")}
                 />
                 <InputWithLabel
-                    //TODO: Consider whether to do confirm password
+                    label="Phone Number"
+                    iconName="phone-outline"
+                    placeholder="Enter phone number"
+                    value={inputs.phone}
+                    error={errors.phoneErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'phone')}
+                    onFocus={()=> handleError(null, 'phoneErr')}
+                    onBlur={() => validation("phone")}
+                    keyboardType="number-pad"
+                />
+                <InputWithLabel
                     label="Password"
-                    value={password}
+                    iconName="lock-outline"
                     placeholder="Enter password"
-                    secureTextEntry={true}
+                    value={inputs.password}
+                    error={errors.passwordErr}
+                    onChangeText={(text:any) => handleOnChange(text, 'password')}
+                    onFocus={()=> handleError(null, 'passwordErr')}
+                    onBlur={() => validation("password")}
                     autoCapitalize="none"
-                    onChangeText={(input: any) => setPassword(input)}
+                    password
                 />
 
                 <AppButton
                     title="Register"
-                    onPress={()=>{register(email, password, name, phone)}}
+                    onPress={()=>{register(inputs.email, inputs.password, inputs.name, inputs.phone)}}
+                    disabled={loading}
                 />
             </KeyboardAvoidingView>
         </View>

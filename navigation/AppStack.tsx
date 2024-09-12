@@ -4,10 +4,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import SavedScreen from '../screens/SavedScreen.tsx';
 import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
+import EditEvent from '../screens/EditEvent.tsx';
+import SavedScreen from '../screens/SavedScreen.tsx';
+import EditProfileScreen from '../screens/EditProfileScreen.tsx';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -21,7 +23,7 @@ const AppStack = () => {
 
                     if (route.name === 'Home Page') {
                         iconName = 'home';
-                    } else if (route.name === 'Saved') {
+                    } else if (route.name === 'My Event') {
                         iconName = 'heart';
                     } else if (route.name === 'Profile') {
                         iconName = 'person';
@@ -41,7 +43,7 @@ const AppStack = () => {
                 }}
             />
             <Tab.Screen
-                name="Saved"
+                name="My Event"
                 component={SavedScreen}
 
             />
@@ -54,19 +56,20 @@ const AppStack = () => {
 }
 
 const StackNav = () => {
-    return(
-        <Stack.Navigator>
+    return (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen
                 name="Home"
                 component={HomeScreen}
-                //delete the option
-                options={{ headerShown: false }}
             />
             <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
-                //delete the option
-                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
+                options={{headerShown: true}}
             />
             <Stack.Screen
                 name="AddEvent"
@@ -77,6 +80,10 @@ const StackNav = () => {
                 component={EventDetails}
             />
             <Stack.Screen
+                name="EditEvent"
+                component={EditEvent}
+            />
+            <Stack.Screen
                 name="Notification"
                 component={NotificationScreen}
                 options={{ headerShown: true }}
@@ -84,7 +91,5 @@ const StackNav = () => {
         </Stack.Navigator>
     );
 }
-
-
 
 export default AppStack;

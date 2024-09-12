@@ -101,7 +101,6 @@ const HomeScreen = ({ navigation }:any) => {
           onPress={() => navigation.navigate('Notification')}
         />
       </View>
-
       <TouchableOpacity onPress={selectDay}>
         <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'baseline'}}>
           <Text style={styles.dayFont}>{moment(selectedDay).format('Do')} </Text>
