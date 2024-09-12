@@ -23,7 +23,7 @@ const errorCallback = (err: any) => {
 export const createUsersTable = async(db: SQLiteDatabase) => {
     try{
         const query = `CREATE TABLE IF NOT EXISTS users (
-                            user_id TEXT PRIMARY KEY, 
+                            user_id TEXT PRIMARY KEY,
                             name TEXT NOT NULL,
                             pfp TEXT,
                             phone TEXT,
@@ -160,7 +160,7 @@ export const getJoinEventsByUserIDOffline = async (db: SQLiteDatabase, user_id: 
         participantResults.forEach(result => {
             for (let i = 0; i < result.rows.length; i++) {
                 const row = result.rows.item(i);
-                eventIds.push(row.event_id); 
+                eventIds.push(row.event_id);
             }
         });
 
@@ -169,7 +169,7 @@ export const getJoinEventsByUserIDOffline = async (db: SQLiteDatabase, user_id: 
             return [];
         }
 
-        const placeholders = eventIds.map(() => '?').join(', '); 
+        const placeholders = eventIds.map(() => '?').join(', ');
         const eventsQuery = `SELECT * FROM events WHERE event_id IN (${placeholders})`;
         const eventsResults = await db.executeSql(eventsQuery, eventIds);
 
@@ -275,8 +275,8 @@ export const createEventLocally = async (
         event.event_id,
         event.name,
         event.description,
-        event.start_date,  
-        event.end_date,    
+        event.start_date,
+        event.end_date,
         event.location,
         event.seats,
         event.guest,
@@ -311,7 +311,7 @@ export const createEventsParticipants = async(
 //Update user profile
 /*
 export const updateUser = async(
-    db: SQLiteDatabase, 
+    db: SQLiteDatabase,
     user_id: string,
     name: string,
     profile_pic: string,
@@ -331,15 +331,15 @@ export const updateUser = async(
 
 //Update event
 export const editEventLocally = async(
-    db: SQLiteDatabase, 
+    db: SQLiteDatabase,
     event: Event) => {
         try{
             const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=? WHERE event_id=?';
             const parameters = [
                 event.name,
                 event.description,
-                event.start_date,  
-                event.end_date,    
+                event.start_date,
+                event.end_date,
                 event.location,
                 event.guest,
                 event.seats,
