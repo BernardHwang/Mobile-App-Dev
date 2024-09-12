@@ -2,6 +2,29 @@ import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firest
 import { Event } from '../Types';
 import moment from 'moment';
 
+// Function to get event by event ID
+export const getEvents = async (event_id: string): Promise<any> => {
+  try {
+    // Directly access the document by its ID
+    const eventDoc = await firestore().collection('events').doc(event_id).get();
+
+    if (!eventDoc.exists) {
+      console.log('No matching document.');
+      return null; // Return null if the document doesn't exist
+    }
+
+    // Return the event data, including the document ID
+    return {
+      id: eventDoc.id,  // Firestore document ID
+      ...eventDoc.data() // Spread the event data fields
+    };
+    
+  } catch (error) {
+    console.error('Failed to get event: ', error);
+    throw new Error('Failed to get event');
+  }
+};
+
 // Function to get events hosted by a specific user
 export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[]> => {
     try {

@@ -7,6 +7,7 @@ import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../dat
 import { AuthContext } from '../navigation/AuthProvider';
 import TabButtons, { TabButtonType } from './MyEventScreenButtons';
 import { _sync, checkInternetConnection } from '../database/sync';
+import moment from 'moment';
 
 export enum CustomTab {
   Tab1,
@@ -63,12 +64,15 @@ const MyEventScreen = ({ navigation }:any) => {
       console.log('Fetch join event offline');
     }
   };
-  
+
+  const convertTimestampToDate = (timestamp) => {
+    return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+  };
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
       style={styles.eventCard}
-      onPress={()=>navigation.navigate('EventDetails', { event: item })}
+      onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEventsForHost})}
     >
       {item.image ? (
         <Image
@@ -82,7 +86,7 @@ const MyEventScreen = ({ navigation }:any) => {
         </View>
       )}
       <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{item.time}</Text>
+      <Text style={styles.eventTime}>{moment(convertTimestampToDate(item.start_date)).format('MMMM Do YYYY, h:mm A')}</Text> 
     </TouchableOpacity>
   );
 
@@ -96,6 +100,17 @@ const MyEventScreen = ({ navigation }:any) => {
     }
   }, [selectedTab]); // Runs when selectedTab changes
 
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      if (selectedTab === CustomTab.Tab2) {
+        await fetchEventsForHost();  // Ensure hosted events are refreshed on focus
+      }
+    });
+  
+    return unsubscribe;  // Clean up the listener on unmount
+  }, [navigation, selectedTab]);
+
+  
     return (
       <>
       <TabButtons 

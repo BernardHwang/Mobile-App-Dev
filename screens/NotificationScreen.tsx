@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import firestore from '@react-native-firebase/firestore'; // Import from @react-native-firebase
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#fff',
     height: 100,
-    width: 350
+    width: Dimensions.get('window').width - 45
 
   },
   noNotificationsText: {

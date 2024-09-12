@@ -4,8 +4,8 @@ import { Alert, Animated, Dimensions, FlatList, Modal, StyleSheet, Text, Touchab
 import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { cancelEventLocally, getDBConnection, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
-import { cancelEventOnline, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
+import { cancelEventLocally, getDBConnection, getEventsByEventID, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
+import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
@@ -15,7 +15,7 @@ const IMG_HEIGHT = 300;
 const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 
 const EventDetails = ({ route, navigation }: any) => {
-    const { event } = route.params;
+    // const { event } = route.params;
     const { user } = useContext(AuthContext);
     const { socket } = useContext(SocketContext);
     const [participantsCount, setParticipantsCount] = useState(0);
@@ -23,6 +23,8 @@ const EventDetails = ({ route, navigation }: any) => {
     const [join, setJoin] = useState<boolean>(false);
     const [joinedUsers, setJoinedUsers] = useState<any[]>([]);
     const [showSplitButtons, setShowSplitButtons] = useState<boolean>(false);
+    const [event, setEvent] = useState<any>(null); //get event by id (to be passed to event details)
+    const [eventID, setEventID] = useState(route.params.event_id);
 
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
@@ -31,12 +33,12 @@ const EventDetails = ({ route, navigation }: any) => {
       
           // Use online or offline data source based on connection status
           const participants = connected
-            ? await getEventsParticipantsByEventID(event.id)
-            : await getEventsParticipantsByEventIDOffline(await getDBConnection(), event.id);
+            ? await getEventsParticipantsByEventID(eventID)
+            : await getEventsParticipantsByEventIDOffline(await getDBConnection(), eventID);
       
           const icons = connected
-            ? await getParticipantsByEventID(event.id)
-            : await getParticipantsByEventIDOffline(await getDBConnection(), event.id);
+            ? await getParticipantsByEventID(eventID)
+            : await getParticipantsByEventIDOffline(await getDBConnection(), eventID);
       
           const isParticipant = participants.some(p => p.participant_id === user.uid);
       
@@ -51,7 +53,43 @@ const EventDetails = ({ route, navigation }: any) => {
       };
       
 
-    useEffect(() => {checkIfJoined()}, [event.id, user.uid]);
+    // useEffect(() => {
+    //     const fetchEventData = async () => {
+    //         try {
+    //             // Fetch the event data
+    //             const theEvent = await getEventByID(eventID);
+    //             // Set the event state
+    //             setEvent(theEvent);
+    //         } catch (error) {
+    //             console.error("Error fetching event data:", error);
+    //         }
+    //     };
+    
+    //     fetchEventData();
+    //     checkIfJoined();
+    // }, [eventID]); 
+
+    const fetchEventData = async () => {
+        try {
+            const theEvent = await getEventByID(eventID);
+            if (theEvent){
+                setEvent(theEvent);
+                console.log('Updated Event Data: ', event);
+                return theEvent; 
+            }
+        } catch (error) {
+            console.error("Error fetching event data:", error);
+        }
+    };    
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchEventData();
+            checkIfJoined();
+        });
+    
+        return unsubscribe;
+    }, [navigation, eventID]);
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const imgHeight = scrollY.interpolate({
@@ -72,6 +110,14 @@ const EventDetails = ({ route, navigation }: any) => {
         navigation.goBack(); // Navigate back to the previous screen when closing the modal
     };
 
+    const getEventByID = async (event_id: string) => {
+        const connected = await checkInternetConnection();
+        const eventByID = connected
+        ? await getEvents(event_id)
+        : await getEventsByEventID(await getDBConnection(), event_id);
+        return eventByID;
+    }
+
     const cancelEvent = async (id: string) => {
         try{
             const db = await getDBConnection();
@@ -79,11 +125,8 @@ const EventDetails = ({ route, navigation }: any) => {
             await cancelEventLocally(db, id);
             await _sync();
             setCancel(false);
-
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-            });
+            route.params.refresh();
+            navigation.goBack();
         } catch(error) {
             console.error("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
@@ -117,6 +160,10 @@ const EventDetails = ({ route, navigation }: any) => {
         }
     }
 
+    const convertTimestampToDate = (timestamp) => {
+        return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    };
+
     return (
         <Modal
             animationType="slide"
@@ -133,6 +180,9 @@ const EventDetails = ({ route, navigation }: any) => {
                 )}
                 scrollEventThrottle={16} // Determines how often the scroll events are fired (for better performance)
             >
+                {event
+                ? (
+                <>
                 {/* Image Container */}
                 <View>
                     <Animated.Image
@@ -177,15 +227,15 @@ const EventDetails = ({ route, navigation }: any) => {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>Start</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.start_time}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('h:mm A')}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>End</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{event.end_time}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('h:mm A')}</Text>
                             </View>
                         </View>
                     </View>
@@ -195,10 +245,14 @@ const EventDetails = ({ route, navigation }: any) => {
                 <Text style={styles.paragraph}>
                     {event.description}
                 </Text>
+                </>
+                ):(
+                    <Text>Loading event details...</Text>
+                )}
             </Animated.ScrollView>
 
             {/* Fixed Footer */}
-            {event.host_id == user.uid?
+            {event && event.host_id == user.uid?
             //Cancel event
             
             <View style={styles.detailFooter}>
@@ -227,7 +281,7 @@ const EventDetails = ({ route, navigation }: any) => {
             </View>
             }
 
-            {cancel ? (
+            {event && cancel ? (
             <View style={styles.overlay}>
                 <View style={styles.cancelContainer}>
                 <Text style={{ textAlign: 'center', margin: 50, fontSize: 18, fontWeight: '500' }}>Are you sure you want to cancel the event?</Text>
@@ -255,9 +309,12 @@ const EventDetails = ({ route, navigation }: any) => {
             </TouchableOpacity>
 
             { /* Edit Button */}
-            {event.host_id == user.uid?
+            {event && event.host_id == user.uid?
            <TouchableOpacity
-                onPress={()=> navigation.navigate('EditEvent', {event: event})}
+                onPress={()=> navigation.navigate('EditEvent', {
+                    event_id: eventID, 
+                    refresh: fetchEventData
+                })}
                 style={styles.headerRightContainer}
            >
                 <View style={styles.headerIconContainer}>

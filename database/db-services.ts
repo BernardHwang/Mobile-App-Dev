@@ -1,5 +1,6 @@
 import { SQLiteDatabase, enablePromise, openDatabase } from 'react-native-sqlite-storage';
 import { Event } from '../Types';
+import moment from 'moment';
 const databaseName = 'db';
 
 enablePromise(true);
@@ -76,59 +77,63 @@ export const createEventsParticipantsTable = async(db: SQLiteDatabase) => {
     }
 }
 
-/*
-export const getUsers = async(db: SQLiteDatabase): Promise<any> => {
+export const getEventsByEventID = async(db: SQLiteDatabase, event_id: string): Promise<any> => {
     try{
-        const usersData: any = [];
-        const query =  `SELECT * FROM users`;
-        const results = await db.executeSql(query);
-        results.forEach(result=> {
-            (result.rows.raw()).forEach((item:any)=>{
-                usersData.push(item);
-            })
-        });
-        return usersData;
-    }catch(error){
-        console.error(error);
-        throw Error('Failed to get users');
-    }
-}*/
-/*
-export const getEvents = async(db: SQLiteDatabase): Promise<any> => {
-    try{
-        const eventsData:any = [];
-        const query = `SELECT * FROM events`;
-        const results = await db.executeSql(query);
-        results.forEach(result => {
-            (result.rows.raw()).forEach((item:any)=>{
-                eventsData.push(item);
-            })
-        });
-        return eventsData;
+        const query = `SELECT * FROM events WHERE event_id = ?`;
+        const results = await db.executeSql(query, [event_id]);
+        return results[0].rows.item(0)
     }catch (error){
         console.error(error);
         throw Error('Failed to get events');
     }
-}*/
+}
 
 // Show in 'Home' screen to display the events happen in that day
-export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any> => {
-    try{
-        const eventsData: any = [];
-        const formattedDate = date.toISOString().split('T')[0]; //convert to date format YYYY-MM-DD
-        const query = `SELECT * FROM events WHERE DATE(start_date) = ?`;
-        const results = await db.executeSql(query, [formattedDate]);
-        results.forEach(result => {
-            (result.rows.raw()).forEach((item: any) => {
-                eventsData.push(item);
-            })
+export const getEventsByDate = async (db: SQLiteDatabase, date: Date): Promise<any> => {
+    try {
+      const eventsData: any = [];
+      const formattedDate = date.toISOString().split('T')[0]; // Convert to date format YYYY-MM-DD
+  
+      const query = `
+        SELECT event_id, name, description, image, location, start_date, end_date, guest, seats, host_id
+        FROM events 
+        WHERE DATE(start_date) <= ? 
+        AND DATE(end_date) >= ? 
+        ORDER BY TIME(start_date) ASC`; // Sort by start time for that day
+  
+      const results = await db.executeSql(query, [formattedDate, formattedDate]);
+  
+      results.forEach(result => {
+        result.rows.raw().forEach((item: any) => {
+          const eventStartDate = moment(item.start_date).local();
+          const eventEndDate = moment(item.end_date).local();
+  
+          // Structure matches the output from Firestore
+          eventsData.push({
+            id: item.event_id,
+            name: item.name,
+            description: item.description,
+            image: item.image,
+            location: item.location,
+            start_time: eventStartDate.format('HH:mm'), // Format time for consistency
+            start_date: eventStartDate.toISOString(),
+            end_time: eventEndDate.format('HH:mm'),
+            end_date: eventEndDate.toISOString(),
+            guest: item.guest,
+            seats: item.seats,
+            host_id: item.host_id,
+          });
         });
-        return eventsData;
-    }catch(error){
-        console.error(error);
-        throw Error('Failed to get events');
+      });
+      console.log('Fetch event of the day offline');
+      return eventsData;
+    } catch (error) {
+      console.error(error);
+      throw Error('Failed to get events');
     }
-}
+  };
+  
+  
 
 // Show in 'Hosted event' screen
 export const getHostEventsByUserIDOffline = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
