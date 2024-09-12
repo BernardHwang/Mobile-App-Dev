@@ -5,6 +5,7 @@ import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { getDBConnection, getHostEventsByUserIDOffline, getJoinEventsByUserIDOffline } from '../database/db-services';
 import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
+import Ionicons from 'react-native-vector-icons/Ionicons'; 
 import TabButtons, { TabButtonType } from './MyEventScreenButtons';
 import { _sync, checkInternetConnection } from '../database/sync';
 import moment from 'moment';
@@ -69,8 +70,10 @@ const MyEventScreen = ({ navigation }:any) => {
     return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
   };
 
-  const renderEventItem = ({ item }) => (
-    <TouchableOpacity
+  const renderEventItem = ({ item }) => {
+    const isEventActive = moment().isBefore(convertTimestampToDate(item.end_date));
+    return(
+      <TouchableOpacity
       style={styles.eventCard}
       onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEventsForHost})}
     >
@@ -85,10 +88,28 @@ const MyEventScreen = ({ navigation }:any) => {
           <Text>No Image</Text>
         </View>
       )}
-      <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{moment(convertTimestampToDate(item.start_date)).format('MMMM Do YYYY, h:mm A')}</Text> 
+      <View style={styles.eventInfo}>
+        <View style={styles.eventTextContainer}>
+          <Text style={styles.eventTitle}>{item.name}</Text>
+          <Text style={styles.eventTime}>
+            {moment(convertTimestampToDate(item.start_date)).format('MMMM Do YYYY, h:mm A')}
+          </Text>
+        </View>
+        <View style={styles.statusContainer}>
+          <Ionicons
+            name="ellipse"
+            size={12}
+            color={isEventActive ? 'green' : 'grey'} // Green for active, red for inactive
+            style={styles.statusIcon}
+          />
+          <Text style={[styles.statusText, { color: isEventActive ? 'green' : 'grey' }]}>
+            {isEventActive ? 'Active' : 'Inactive'}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   useEffect(() => {
     if (selectedTab === CustomTab.Tab1) {
