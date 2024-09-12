@@ -9,7 +9,7 @@ import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
 import EditEvent from '../screens/EditEvent.tsx';
-
+import EditProfileScreen from '../screens/EditProfileScreen.tsx';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -66,6 +66,11 @@ const StackNav = () => {
                 component={ProfileScreen}
             />
             <Stack.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
+                options={{headerShown: true}}
+            />
+            <Stack.Screen
                 name="AddEvent"
                 component={AddEvent}
             />
@@ -85,7 +90,5 @@ const StackNav = () => {
         </Stack.Navigator>
     );
 }
-
-
 
 export default AppStack;
