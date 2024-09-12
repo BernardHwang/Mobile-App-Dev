@@ -9,6 +9,7 @@ import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
 import EditEvent from '../screens/EditEvent.tsx';
+import MyEventScreen from '../screens/MyEventScreen.tsx';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -36,34 +37,33 @@ const AppStack = () => {
         >
             <Tab.Screen
                 name="Home Page"
-                component={StackNav}
+                component={HomeStackNav}
                 options={{
                     headerShown: false
                 }}
             />
             <Tab.Screen
                 name="My Event"
-                component={myEventScreen}
+                component={EventStackNav}
+                options={{
+                    headerShown: false
+                }}
 
             />
             <Tab.Screen
                 name="Profile"
-                component={ProfileScreen}
+                component={ProfileStackNav}
             />
         </Tab.Navigator>
     );
 }
 
-const StackNav = () => {
+const HomeStackNav = () => {
     return(
         <Stack.Navigator screenOptions={{headerShown: false}}>
             <Stack.Screen
                 name="Home"
                 component={HomeScreen}
-            />
-            <Stack.Screen
-                name="Profile"
-                component={ProfileScreen}
             />
             <Stack.Screen
                 name="AddEvent"
@@ -86,6 +86,37 @@ const StackNav = () => {
     );
 }
 
+const EventStackNav = () => {
+    return(
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen
+                name="Event"
+                component={MyEventScreen}
+                options={{ headerShown: true }}
+            />
+            <Stack.Screen
+                name="EventDetails"
+                component={EventDetails}
+            />
+            <Stack.Screen
+                name="EditEvent"
+                component={EditEvent}
+            />
+        </Stack.Navigator>
+    );
+}
+
+const ProfileStackNav = () => {
+    return(
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
+            />
+            
+        </Stack.Navigator>
+    );
+}
 
 
 export default AppStack;

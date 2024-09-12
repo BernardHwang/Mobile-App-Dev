@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -8,6 +8,9 @@ import { Calendar } from 'react-native-calendars';
 import { AuthContext } from '../navigation/AuthProvider';
 import IconBadge from 'react-native-icon-badge';
 import { fetchEventsForSelectedDay } from '../database/firestore-service';
+import { checkInternetConnection } from '../database/sync';
+import { getDBConnection, getEventsByDate } from '../database/db-services';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -17,24 +20,48 @@ const HomeScreen = ({ navigation }:any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
-  useEffect(() => {
-    fetchEvents();
+  // useEffect(() => {
+  //   fetchEvents();
   
-    const unsubscribe = firestore()
-      .collection('users')
-      .doc(user.uid)
-      .collection('notifications')
-      .onSnapshot((snapshot) => {
-        setNotificationCount(snapshot.size);
-      }, (error) => {
-        console.error('Error fetching real-time notifications:', error);
-      });
+  //   const unsubscribe = firestore()
+  //     .collection('users')
+  //     .doc(user.uid)
+  //     .collection('notifications')
+  //     .onSnapshot((snapshot) => {
+  //       setNotificationCount(snapshot.size);
+  //     }, (error) => {
+  //       console.error('Error fetching real-time notifications:', error);
+  //     });
       
-    return () => unsubscribe();
-  }, [selectedDay, user.uid]);
+  //   return () => unsubscribe();
+  // }, [navigation, selectedDay, user.uid]);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Fetch events every time the screen comes into focus
+      fetchEvents();
+
+      // Fetch notification count in real-time
+      const unsubscribe = firestore()
+        .collection('users')
+        .doc(user.uid)
+        .collection('notifications')
+        .onSnapshot((snapshot) => {
+          setNotificationCount(snapshot.size);
+        }, (error) => {
+          console.error('Error fetching real-time notifications:', error);
+        });
+      
+      return () => unsubscribe(); // Clean up on unmount
+    }, [selectedDay, user.uid]) // Re-run this effect when selectedDay or user.uid changes
+  );
 
   const fetchEvents = async () => {
-    const events = await fetchEventsForSelectedDay(selectedDay);
+    const connected = await checkInternetConnection();
+    const events = connected 
+    ? await fetchEventsForSelectedDay(selectedDay)
+    : await getEventsByDate(await getDBConnection(), new Date(selectedDay));
+    
     setEvents(events);
   };
 
@@ -45,7 +72,7 @@ const HomeScreen = ({ navigation }:any) => {
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
       style={styles.eventCard}
-      onPress={()=>navigation.navigate('EventDetails', { event: item })}
+      onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEvents })}
     >
       {item.image ? (
         <Image

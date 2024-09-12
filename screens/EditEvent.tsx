@@ -9,20 +9,22 @@ import { editEventLocally, getDBConnection } from '../database/db-services';
 import { updateEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
+import { Timestamp } from 'firebase/firestore';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
-    const { event } = route.params;
-
-    const [eventTitle, setTitle] = useState<string>(event.name);
-    const [startDate, setStartDate] = useState<Date|null>(event.start_date ? new Date(event.start_date) : null);
-    const [endDate, setEndDate] = useState<Date|null>(event.end_date ? new Date(event.end_date) : null);
-    const [startTime, setStartTime] = useState<Date|null>(event.start_date ? new Date(event.start_date) : null);
-    const [endTime, setEndTime] = useState<Date|null>(event.end_date ? new Date(event.end_date) : null);
-    const [location, setLocation] = useState<string>(event.location);
-    const [guest, setGuest] = useState<string>(event.guest||'');
-    const [seat, setSeat] = useState<number>(event.seats||0);
-    const [desc, setDesc] = useState<string>(event.description);
+    // const { event } = route.params;
+    const [eventID, setEventID] = useState<string>(route.params.event_id);
+    const [event, setEvent] = useState<any>(null);
+    const [eventTitle, setTitle] = useState<string>('');
+    const [startDate, setStartDate] = useState<Date|null>(null);
+    const [endDate, setEndDate] = useState<Date|null>(null);
+    const [startTime, setStartTime] = useState<Date|null>(null);
+    const [endTime, setEndTime] = useState<Date|null>(null);
+    const [location, setLocation] = useState<string>('');
+    const [guest, setGuest] = useState<string>('');
+    const [seat, setSeat] = useState<number>(0);
+    const [desc, setDesc] = useState<string>('');
     const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
@@ -30,12 +32,6 @@ const EditEvent = ({navigation, route}: any) => {
     const [isOnline, setIsOnline] = useState<boolean>(true);
     const [errorMessage, setErrorMessage] = useState('');
     
-    const defaultImages = [
-        {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
-        {uri: require('../images/eventImg2.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg2.jpg?alt=media&token=162760ed-dca8-474d-b267-28179d6bb833'},
-        {uri: require('../images/eventImg3.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg3.jpg?alt=media&token=7b3a58d2-1fa6-4ae0-b364-377a852b5e4a'}
-    ];
-
     const checkConnection = async () => {
         const connected = await checkInternetConnection();
         setIsOnline(!!connected);
@@ -48,12 +44,46 @@ const EditEvent = ({navigation, route}: any) => {
         }
     };
 
-    useEffect(()=>{
-        console.log(event);
-    },[])
-    useEffect(()=>{
-        checkConnection();
-    },[navigation])
+     // Load event data on mount
+     useEffect(() => {
+        const loadEvent = async () => {
+            try {
+                const eventDetails = await route.params.refresh(eventID); // Get event data from refresh
+                console.log('Event Details: ', eventDetails); // Log to verify
+                if (eventDetails) {
+                    setEvent(eventDetails);
+                } else {
+                    console.log('No event details returned');
+                }
+            } catch (error) {
+                console.error("Error loading event: ", error);
+            }
+        };
+        loadEvent();
+        checkConnection(); // Check the internet connection
+    }, [eventID, navigation]);
+    
+
+    // Update form fields when the event data is available
+    useEffect(() => {
+        if (event) {
+            const start = convertTimestampToDate(event.start_date);
+            const end = convertTimestampToDate(event.end_date);
+            setTitle(event.name || '');
+            setStartDate(moment(start).startOf('day').toDate());
+            setEndDate(moment(end).startOf('day').toDate());
+            setStartTime(start);
+            setEndTime(end);
+            setLocation(event.location || '');
+            setGuest(event.guest || '');
+            setSeat(event.seats || 0);
+            setDesc(event.description || '');
+        }
+    }, [event]);
+
+    const convertTimestampToDate = (timestamp) => {
+        return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    };
 
     const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
@@ -62,7 +92,7 @@ const EditEvent = ({navigation, route}: any) => {
                 setStartDate(selectedDate);
                 //Reset end date if start date is late than end date
                 if (endDate && moment(endDate).isBefore(selectedDate)){
-                    setEndDate(undefined);
+                    setEndDate(null);
                 }
             } else {
                 setEndDate(selectedDate);
@@ -78,7 +108,7 @@ const EditEvent = ({navigation, route}: any) => {
                 setStartTime(selectedTime);
                 // Reset end time if it's now earlier than the new start time on the same date
                 if (endDate && startDate && moment(endDate).isSame(startDate, 'day') && endTime && moment(selectedTime).isAfter(endTime)) {
-                    setEndTime(undefined);
+                    setEndTime(null);
                 }
             } else {
                 // If the start and end dates are the same, ensure the end time is after the start time
@@ -178,10 +208,12 @@ const EditEvent = ({navigation, route}: any) => {
                     host_id: user.uid
                 };
         
-                await updateEventOnline(eventData)
-                await editEventLocally(await getDBConnection(), eventData)
+                await updateEventOnline(eventData);
+                await editEventLocally(await getDBConnection(), eventData);
                 await _sync();
         
+                console.log('Editing Event Data: ', eventData);
+
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'My Event' }],
@@ -195,10 +227,18 @@ const EditEvent = ({navigation, route}: any) => {
     };
 
     return (
+        
             <ScrollView keyboardShouldPersistTaps='always'>
+                {event
+                ? (
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <TouchableOpacity style={styles.cancelBtn} onPress={() => {navigation.goBack()}}
+                        <TouchableOpacity style={styles.cancelBtn} 
+                        onPress={() => {
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'My Event' }],
+                            });}}
                     >
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
@@ -383,8 +423,11 @@ const EditEvent = ({navigation, route}: any) => {
                     />
                 )}
                 </View>
-                
+                    ):(
+                        <Text>Loading event details...</Text>
+                    )}
                 </ScrollView>
+            
         
     );
 };

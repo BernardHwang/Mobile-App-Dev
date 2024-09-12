@@ -83,7 +83,7 @@ const AddEvent = ({navigation}: any) => {
                 setStartDate(selectedDate);
                 //Reset end date if start date is late than end date
                 if (endDate && moment(endDate).isBefore(selectedDate)){
-                    setEndDate(undefined);
+                    setEndDate(null);
                 }
             } else {
                 setEndDate(selectedDate);
@@ -99,7 +99,7 @@ const AddEvent = ({navigation}: any) => {
                 setStartTime(selectedTime);
                 // Reset end time if it's now earlier than the new start time on the same date
                 if (endDate && startDate && moment(endDate).isSame(startDate, 'day') && endTime && moment(selectedTime).isAfter(endTime)) {
-                    setEndTime(undefined);
+                    setEndTime(null);
                 }
             } else {
                 // If the start and end dates are the same, ensure the end time is after the start time
