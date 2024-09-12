@@ -5,9 +5,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
 import { FloatingAction } from "react-native-floating-action";
 import { Calendar } from 'react-native-calendars';
-import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from '../db-services';
-import { syncEventsData, syncEventsParticipantsData } from '../firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
+import IconBadge from 'react-native-icon-badge';
+import { fetchEventsForSelectedDay } from '../database/firestore-service';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -15,53 +15,32 @@ const HomeScreen = ({ navigation }:any) => {
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
   const [events, setEvents] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    fetchEventsForSelectedDay(selectedDay);
-  }, [selectedDay]);
+    fetchEvents();
+  
+    const unsubscribe = firestore()
+      .collection('users')
+      .doc(user.uid)
+      .collection('notifications')
+      .onSnapshot((snapshot) => {
+        setNotificationCount(snapshot.size);
+      }, (error) => {
+        console.error('Error fetching real-time notifications:', error);
+      });
+      
+    return () => unsubscribe();
+  }, [selectedDay, user.uid]);
 
-
- /* const _query = async() => {
-    await syncEventsData(await getDBConnection());
-    await syncEventsParticipantsData(await getDBConnection());
-    setEvents(await getEvents(await getDBConnection()));
-  }*/
+  const fetchEvents = async () => {
+    const events = await fetchEventsForSelectedDay(selectedDay);
+    setEvents(events);
+  };
 
   const selectDay = () => {
     setModalVisible(!modalVisible);
   };
-
-  const fetchEventsForSelectedDay = async (day) => {
-    try {
-      const eventsRef = firestore().collection('events');
-      const querySnapshot = await eventsRef.get();
-
-      const fetchedEvents = querySnapshot.docs
-        .map((doc) => {
-          const data = doc.data();
-          const eventStartDate = moment(data.startDate.toDate()).local(); // Start date in local time
-          const eventEndDate = moment(data.endDate.toDate()).local(); // End date in local time
-
-          return {
-            id: doc.id,
-            name: data.name,
-            description: data.description,
-            image: data.image,
-            location: data.location,
-            time: eventStartDate.format('HH:mm'), // Format time in local time
-            startDate: eventStartDate,
-            endDate: eventEndDate, // Keep the end date for comparison
-          };
-        })
-        .filter((event) => event.startDate.isSameOrBefore(day, 'day') && event.endDate.isSameOrAfter(day, 'day')) // Filter by date range
-        .sort((a, b) => moment(a.time, 'HH:mm').diff(moment(b.time, 'HH:mm')));
-
-      setEvents(fetchedEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  };
-
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
@@ -80,7 +59,7 @@ const HomeScreen = ({ navigation }:any) => {
         </View>
       )}
       <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{item.time}</Text>
+      <Text style={styles.eventTime}>{item.start_time}</Text>
     </TouchableOpacity>
   );
 
@@ -93,12 +72,23 @@ const HomeScreen = ({ navigation }:any) => {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
         <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
-        <Ionicons
-          name='notifications-outline'
-          size={25}
-          color='black'
-          style={{ marginTop: 10 }}
-          onPress={() => navigation.navigate('Notification')}
+        <IconBadge
+          MainElement={
+            <Ionicons
+              name='notifications-outline'
+              size={30}
+              color='black'
+              style={{ marginTop: 5 }}
+              onPress={() => navigation.navigate('Notification')}
+            />
+          }
+          BadgeElement={
+            <Text style={{color: 'white', fontSize: 12}}>{notificationCount}</Text>
+          }
+          IconBadgeStyle={
+            { width: 20, height: 20, backgroundColor: '#FF0000' }
+          }
+          Hidden={notificationCount === 0}
         />
       </View>
       <TouchableOpacity onPress={selectDay}>
@@ -123,13 +113,13 @@ const HomeScreen = ({ navigation }:any) => {
               markedDates={{
                 [selectedDay]: {
                   selected: true,
-                  selectedColor: '#8A6536', // Background color of the selected date
+                  selectedColor: '#26294D', // Background color of the selected date
                   selectedTextColor: '#FFFFFF', // Text color of the selected date
                 }
               }}
               theme={{
                 calendarBackground: '#f0f0f0', // Background color for the calendar
-                todayTextColor: '#8A6536', // Color for today's date
+                todayTextColor: '#26294D', // Color for today's date
               }}
               style={{marginBottom: 20,borderRadius: 15}}
             />

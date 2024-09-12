@@ -1,20 +1,17 @@
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-
 export interface User {
     user_id: string;
     name: string;
-    profile_pic: string;
+    pfp: string;
     phone: string;
     email: string;
-    password: string;
   }
   
   export interface Event {
     event_id: string; 
     name: string;
     description: string;
-    start_date: FirebaseFirestoreTypes.Timestamp; 
-    end_date: FirebaseFirestoreTypes.Timestamp; 
+    start_date: string; 
+    end_date: string; 
     location: string;
     seats: number;
     guest: string;

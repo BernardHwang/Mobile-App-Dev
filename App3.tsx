@@ -1,15 +1,16 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import auth from "@react-native-firebase/auth";
-import { AuthProvider } from "./navigation/AuthProvider";
-import { AuthContext } from './navigation/AuthProvider';
-import AuthStack from './navigation/AuthStack';
+import { NavigationContainer } from '@react-navigation/native';
+import React, { useContext, useEffect, useState } from 'react';
+import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection } from './database/db-services';
 import AppStack from './navigation/AppStack';
-import { createEventsParticipantsTable, createEventsTable, createUsersTable, getDBConnection, getEvents } from './db-services';
+import { AuthContext, AuthProvider } from "./navigation/AuthProvider";
+import AuthStack from './navigation/AuthStack';
+import { SocketProvider } from './navigation/SocketProvider';
+import NotificationListener from './database/NoficationGenerator';
+import { _sync } from './database/sync';
 
 const Routes = () => {
-
-  const { user, setUser, logout } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [initializing, setInitializing] = useState(true);
 
   const handleAuthStateChanged = (user:any) => {
@@ -31,6 +32,7 @@ const Routes = () => {
 
   useEffect(() => {
     _createTable();
+    _sync();
   }, []);
 
   //TODO: consider whether to implement or delete
@@ -38,7 +40,14 @@ const Routes = () => {
 
   return (
     <NavigationContainer>
-      {user ? <AppStack /> : <AuthStack />}
+       {user ? (
+        <>
+          <NotificationListener />
+          <AppStack />
+        </>
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 }
@@ -47,7 +56,9 @@ const App = () => {
 
   return (
     <AuthProvider>
+      <SocketProvider>
         <Routes />
+      </SocketProvider>
     </AuthProvider>
   );
 }

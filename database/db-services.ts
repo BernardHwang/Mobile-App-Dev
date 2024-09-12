@@ -1,5 +1,5 @@
-import {SQLiteDatabase, enablePromise, openDatabase} from 'react-native-sqlite-storage';
-
+import { SQLiteDatabase, enablePromise, openDatabase } from 'react-native-sqlite-storage';
+import { Event } from '../Types';
 const databaseName = 'db';
 
 enablePromise(true);
@@ -25,10 +25,9 @@ export const createUsersTable = async(db: SQLiteDatabase) => {
         const query = `CREATE TABLE IF NOT EXISTS users (
                             user_id TEXT PRIMARY KEY, 
                             name TEXT NOT NULL,
-                            profile_pic TEXT,
+                            pfp TEXT,
                             phone TEXT,
-                            email TEXT NOT NULL UNIQUE,
-                            password TEXT NOT NULL
+                            email TEXT NOT NULL UNIQUE
                         )`;
         await db.executeSql(query);
         console.log('Table users created successful');
@@ -77,6 +76,7 @@ export const createEventsParticipantsTable = async(db: SQLiteDatabase) => {
     }
 }
 
+/*
 export const getUsers = async(db: SQLiteDatabase): Promise<any> => {
     try{
         const usersData: any = [];
@@ -92,8 +92,8 @@ export const getUsers = async(db: SQLiteDatabase): Promise<any> => {
         console.error(error);
         throw Error('Failed to get users');
     }
-}
-
+}*/
+/*
 export const getEvents = async(db: SQLiteDatabase): Promise<any> => {
     try{
         const eventsData:any = [];
@@ -109,7 +109,7 @@ export const getEvents = async(db: SQLiteDatabase): Promise<any> => {
         console.error(error);
         throw Error('Failed to get events');
     }
-}
+}*/
 
 // Show in 'Home' screen to display the events happen in that day
 export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any> => {
@@ -131,7 +131,7 @@ export const getEventsByDate = async(db: SQLiteDatabase,date: Date): Promise<any
 }
 
 // Show in 'Hosted event' screen
-export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
+export const getHostEventsByUserIDOffline = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];
         const query =  `SELECT * FROM events WHERE host_id=?`;
@@ -144,27 +144,49 @@ export const getHostEventsByUserID = async(db: SQLiteDatabase,user_id: string): 
         return eventsData;
     }catch(error){
         console.error(error);
-        throw Error('Failed to get events');
+        throw Error('Failed to get events offline');
     }
 }
 
 // Show in 'Joined event' screen
-export const getJoinEventsByUserID = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
-    try{
-        const eventsData: any = [];
-        const query =  `SELECT * FROM events_participants WHERE participant_id=?`;
-        const results = await db.executeSql(query, [user_id]);
-        results.forEach(result => {
-            (result.rows.raw()).forEach((item: any) => {
-                eventsData.push(item);
-            })
+export const getJoinEventsByUserIDOffline = async (db: SQLiteDatabase, user_id: string): Promise<any[]> => {
+    try {
+        const eventsData: any[] = [];
+
+        const participantQuery = `SELECT event_id FROM events_participants WHERE participant_id = ?`;
+        const participantResults = await db.executeSql(participantQuery, [user_id]);
+
+        const eventIds: string[] = [];
+        participantResults.forEach(result => {
+            for (let i = 0; i < result.rows.length; i++) {
+                const row = result.rows.item(i);
+                eventIds.push(row.event_id); 
+            }
         });
+
+        if (eventIds.length === 0) {
+            console.log('No event ID found'); //
+            return [];
+        }
+
+        const placeholders = eventIds.map(() => '?').join(', '); 
+        const eventsQuery = `SELECT * FROM events WHERE event_id IN (${placeholders})`;
+        const eventsResults = await db.executeSql(eventsQuery, eventIds);
+
+        eventsResults.forEach(result => {
+            for (let i = 0; i < result.rows.length; i++) {
+                const row = result.rows.item(i);
+                eventsData.push(row); // Add each event's data to the result array
+            }
+        });
+
         return eventsData;
-    }catch(error){
-        console.error(error);
-        throw Error('Failed to get events');
+    } catch (error) {
+        console.error('Failed to get joined events offline: ', error);
+        throw new Error('Failed to get joined events offline');
     }
-}
+};
+
 
 // User view their own profile details
 export const getUsersByID = async(db: SQLiteDatabase, user_id: string): Promise<any> => {
@@ -182,8 +204,8 @@ export const getUsersByID = async(db: SQLiteDatabase, user_id: string): Promise<
     }
 }
 
-// Host can see details of the participants for an event
-export const getEventsParticipantsByEventID = async(db: SQLiteDatabase, event_id: string): Promise<any> => {
+// Number of participants for an event
+export const getEventsParticipantsByEventIDOffline = async(db: SQLiteDatabase, event_id: string): Promise<any> => {
     try{
         const eventsParticipantsData:any = [];
         const query = `SELECT * FROM events_participants WHERE event_id=?`;
@@ -193,6 +215,7 @@ export const getEventsParticipantsByEventID = async(db: SQLiteDatabase, event_id
                 eventsParticipantsData.push(item);
             })
         });
+        console.log('Fetch event participants offline');
         return eventsParticipantsData;
     }catch(error){
         console.error(error);
@@ -200,51 +223,76 @@ export const getEventsParticipantsByEventID = async(db: SQLiteDatabase, event_id
     }
 }
 
-//Create user
-export const createUser = async(
-    db: SQLiteDatabase, 
-    user_id: string,
-    name: string,
-    phone: string,
-    email: string,
-    password: string) => {
-        try{
-            const profile_pic = 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/default_pfp.jpg?alt=media&token=643b0bba-8a1a-405a-82cf-16111c4fc147';
-            const query = 'INSERT INTO users(user_id,name,profile_pic,phone,email,password) VALUES (?,?,?,?,?,?)';
-            const parameters = [user_id,name,profile_pic,phone,email,password];
-            await db.executeSql(query, parameters);
-            console.log("User created successfully");
-        }catch(error){
-            console.error(error);
-            throw Error('Failed to create user =(');
-        }
-    }
+// Host can see details of the participants for an event
+export const getParticipantsByEventIDOffline = async (db: SQLiteDatabase, event_id: string): Promise<any[]> => {
+    try {
+        // Step 1: Fetch participant IDs from events_participants table
+        const participantIdsQuery = `SELECT participant_id FROM events_participants WHERE event_id = ?`;
+        const participantIdsResult = await db.executeSql(participantIdsQuery, [event_id]);
 
-//Create event
-export const createEvent = async(
+        if (participantIdsResult[0].rows.length === 0) {
+            console.log('No participants found for this event.');
+            return [];
+        }
+
+        // Extract participant IDs from result
+        const participantIds = [];
+        for (let i = 0; i < participantIdsResult[0].rows.length; i++) {
+            const row = participantIdsResult[0].rows.item(i);
+            participantIds.push(row.participant_id);
+        }
+
+        if (participantIds.length === 0) {
+            return []; // No participants found
+        }
+
+        // Step 2: Fetch user details from users table
+        const userIdsPlaceholders = participantIds.map(() => '?').join(', ');
+        const usersQuery = `SELECT * FROM users WHERE user_id IN (${userIdsPlaceholders})`;
+        const usersResult = await db.executeSql(usersQuery, participantIds);
+
+        const usersData: any[] = [];
+        for (let i = 0; i < usersResult[0].rows.length; i++) {
+            const row = usersResult[0].rows.item(i);
+            usersData.push(row);
+        }
+        console.log('Fetch event participants offline');
+        return usersData;
+    } catch (error) {
+        console.error('Failed to get event participants: ', error);
+        throw new Error('Failed to get event participants');
+    }
+};
+
+
+//Create event when offline
+export const createEventLocally = async (
     db: SQLiteDatabase,
-    eventID: string,
-    name: string,
-    startDate: Date,
-    endDate: Date,
-    location: string,
-    guest: string,
-    description: string,
-    seats: number,
-    image: string,
-    hostID: string) => {
-        try{
-            const query = 'INSERT INTO events(event_id,name,description,start_date,end_date,location,seats,guest,image,host_id) VALUES (?,?,?,?,?,?,?,?,?,?)';
-            const parameters = [eventID,name,description,startDate.toISOString(),endDate.toISOString(),location,seats,guest,image,hostID];
-            await db.executeSql(query, parameters);
-            console.log("Event created successfully");
-        }catch(error){
-            console.error(error);
-            throw Error('Failed to create event =(');
-        }
+    event: Event) => {
+    try {
+      const query = 'INSERT INTO events(event_id, name, description, start_date, end_date, location, seats, guest, image, host_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      const parameters = [
+        event.event_id,
+        event.name,
+        event.description,
+        event.start_date,  
+        event.end_date,    
+        event.location,
+        event.seats,
+        event.guest,
+        event.image,
+        event.host_id,
+      ];
+      await db.executeSql(query, parameters);
+      console.log('Event created successfully in local');
+    } catch (error) {
+      console.error(error);
+      throw Error('Failed to create event');
     }
+  };
 
-//Join event, add participant to the event
+//Join event
+/*
 export const createEventsParticipants = async(
     db: SQLiteDatabase,
     eventID: string,
@@ -258,9 +306,10 @@ export const createEventsParticipants = async(
             console.error(error);
             throw Error('Failed to add participant to event')
         }
-}
+}*/
 
 //Update user profile
+/*
 export const updateUser = async(
     db: SQLiteDatabase, 
     user_id: string,
@@ -278,23 +327,24 @@ export const updateUser = async(
             console.error(error);
             throw Error('Failed to create user =(');
         }
-    }
+    }*/
 
 //Update event
-export const editEvent = async(
+export const editEventLocally = async(
     db: SQLiteDatabase, 
-    eventID: string,
-    name: string,
-    startDate: Date,
-    endDate: Date,
-    location: string,
-    guest: string,
-    description: string,
-    seats: number,
-    image: string) => {
+    event: Event) => {
         try{
-            const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=?,image=? WHERE event_id=?';
-            const parameters = [name,description,startDate.toISOString(),endDate.toISOString(),location,guest,seats,image,eventID];
+            const query = 'UPDATE events SET name=?,description=?,start_date=?,end_date=?,location=?,guest=?,seats=? WHERE event_id=?';
+            const parameters = [
+                event.name,
+                event.description,
+                event.start_date,  
+                event.end_date,    
+                event.location,
+                event.guest,
+                event.seats,
+                event.event_id,
+              ];
             await db.executeSql(query, parameters);
             console.log("Event updated successfully");
         }catch(error){
@@ -304,6 +354,7 @@ export const editEvent = async(
     }
 
 //Delete user account
+/*
 export const deleteUser = async(
     db: SQLiteDatabase,
     userID: string) => {
@@ -315,10 +366,10 @@ export const deleteUser = async(
             console.error(error);
             throw Error('Failed to delete user');
         }
-    }
+    }*/
 
 //Cancel host event
-export const cancelEvent = async(
+export const cancelEventLocally = async(
     db: SQLiteDatabase,
     eventID: string) => {
         try{
@@ -332,6 +383,7 @@ export const cancelEvent = async(
     }
 
 //Unjoin event
+/*
 export const unjoinEvent = async(
     db: SQLiteDatabase,
     participantID: string,
@@ -345,4 +397,4 @@ export const unjoinEvent = async(
             console.error(error);
             throw Error('Failed to unjoin event');
         }
-    }
+    }*/

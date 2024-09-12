@@ -4,13 +4,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import myEventScreen from '../screens/MyEventScreen.tsx';
 import AddEvent from '../screens/AddEvent.tsx';
 import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
 import EditEvent from '../screens/EditEvent.tsx';
-import SavedScreen from '../screens/SavedScreen.tsx';
 import EditProfileScreen from '../screens/EditProfileScreen.tsx';
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -44,7 +43,7 @@ const AppStack = () => {
             />
             <Tab.Screen
                 name="My Event"
-                component={SavedScreen}
+                component={myEventScreen}
 
             />
             <Tab.Screen
@@ -56,8 +55,8 @@ const AppStack = () => {
 }
 
 const StackNav = () => {
-    return (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+    return(
+        <Stack.Navigator screenOptions={{headerShown: false}}>
             <Stack.Screen
                 name="Home"
                 component={HomeScreen}

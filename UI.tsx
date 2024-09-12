@@ -1,21 +1,24 @@
+
 import React, {useState} from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableNativeFeedback} from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Image } from 'react-native-reanimated/lib/typescript/Animated';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const InputWithIconLabel = (props: any) => {
     const orientationDirection = (props.orientation == 'horizontal')? 'row' : 'column';
 
     return (
-        <View style={[style.inputContainer, {flexDirection: orientationDirection}]}>
-            <Icon name={props.iconName} style={style.icon} color={'#26294D'} {...props}/>
+        <View style={[style.inputContainer, {flexDirection: orientationDirection}, props.containerStyle]}>
+            <Icon name={props.iconName} color={'#26294D'} {...props}/>
             <TextInput
-                style={style.input}
+                style={[style.input, props.styles, props.errorMessage ? style.inputError : null]}
                 placeholderTextColor="#999"
                 {...props}
             />
+            {props.errorMessage ? (
+                <Icon name="alert-circle" color="#b52a2a" size={25} style={style.errorIcon} />
+            ) : null}
         </View>
     );
 }
@@ -28,7 +31,7 @@ const InputWithLabel = (props: any) => {
         <View style={{ marginBottom: 20 }}>
             <Text style={inputLabelStyles.label}>{props.label}</Text>
             <View style={[inputLabelStyles.input, { borderColor: props.error ? "red" : "#ccc" }]}>
-                <Icon2
+                <Icon
                     name={props.iconName}
                     style={{fontSize: 25, color: "#30106B", marginLeft: 10, marginRight: 10}}
                 />
@@ -39,7 +42,7 @@ const InputWithLabel = (props: any) => {
                     {...props}
                 />
                 {props.password && (
-                    <Icon2
+                    <Icon
                         onPress={() => setHidePassword(!hidePassword)}
                         name={hidePassword ? 'eye-off-outline' : 'eye-outline'}
                             style={{ color: "#30106B", fontSize: 25, marginRight: 10 }}
@@ -80,17 +83,27 @@ const AppButton = (props: any) => {
 const style = StyleSheet.create({
     inputContainer: {
         alignItems: 'center',
-        borderBottomColor: 'black',
-        borderBottomWidth: 1,
-        margin: 15
+        marginVertical: 15,
+        marginLeft: 0
     },
     input: {
         flex: 1,
         marginLeft: 10,
+        borderWidth: 1,
+        borderColor: 'transparent',
+        backgroundColor: '#eae4f0',
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 4,
     },
-    icon: {
-        marginRight: 10,
+    inputError: {
+        borderColor: '#b52a2a',  // Add red border when error occurs
+        borderWidth: 1,
     },
+    errorIcon: {
+        marginLeft: 5,  // Spacing between the input field and the error icon
+    },
+    
 })
 
 const inputLabelStyles = StyleSheet.create({
