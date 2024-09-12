@@ -23,6 +23,7 @@
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/stack": "^6.4.0",
     "@types/react-native-sqlite-storage": "^6.0.5",
+    "axios": "^1.7.7",
     "express": "^4.19.2",
     "firebase": "^10.13.1",
     "firebase-admin": "^12.4.0",
