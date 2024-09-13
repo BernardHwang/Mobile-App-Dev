@@ -65,7 +65,6 @@ const EventDetails = ({ route, navigation }: any) => {
             const theEvent = await getEventByID(eventID);
             if (theEvent){
                 setEvent(theEvent);
-                console.log('Updated Event Data: ', event);
                 const currentTime = moment(); // Get current time
                 const eventEndTime = moment(theEvent.end_date);
                 setIsEventEnded(eventEndTime.isBefore(currentTime));
@@ -75,6 +74,22 @@ const EventDetails = ({ route, navigation }: any) => {
             console.log("Error fetching event data:", error);
         }
     };    
+
+    const handleEditPress = async () => {
+        const connected = await checkInternetConnection();
+        if (connected) {
+            navigation.navigate('EditEvent', {
+                event_id: eventID, 
+                refresh: fetchEventData
+            });
+        } else {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. You cannot create or update events while offline.',
+                [{ text: 'OK'}]
+            );
+        }
+    };
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
@@ -154,7 +169,11 @@ const EventDetails = ({ route, navigation }: any) => {
                 navigation.goBack();
             }
             else{
-                Alert.alert('Failed to cancel event! Please connect to internet.');
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to cancel event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
             }
         } catch(error) {
             console.log("Error canceling event: ", error);
@@ -172,10 +191,15 @@ const EventDetails = ({ route, navigation }: any) => {
                 setJoin(!join);
                 checkIfJoined();
                 setIsBellOff(false);
+                setShowSplitButtons(true);
                 socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
             }
             else {
-                Alert.alert('Failed to join event! Please connect to internet.')
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to join event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
             }
         }catch(error){
             console.log("Error joining event: ", error);
@@ -191,10 +215,15 @@ const EventDetails = ({ route, navigation }: any) => {
                 await _sync();
                 setJoin(!join);
                 checkIfJoined();
+                setShowSplitButtons(false);
                 socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
             }
             else{
-                Alert.alert('Failed to unjoin event! Please connect to internet.')
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to unjoin event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
             }
         }catch(error){
             console.log("Error unjoining event: ", error);
@@ -206,6 +235,21 @@ const EventDetails = ({ route, navigation }: any) => {
         await changeEventNotificationStatus(eventID, user.uid);
         socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})
     }
+
+    const handleBellPress = async () => {
+        const connected = await checkInternetConnection();
+        if (connected) {
+            setShowSplitButtons(true);
+            setIsBellOff(!isBellOff);
+            changeNotificationStatus();
+        } else {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
+    };
 
     return (
         <Modal
@@ -335,10 +379,10 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff);changeNotificationStatus();}} style={styles.remindBtn}>
+                    <TouchableOpacity onPress={handleBellPress} style={styles.remindBtn}>
                         <MaterialCommunityIcons name={isBellOff ? "bell-ring-outline":"bell-off-outline"} size={23} color='#3e2769'/>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
+                    <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);}} style={styles.unjoinButton}>
                         <Text style={styles.footerBtnTxt}>Unjoin Event</Text>
                     </TouchableOpacity>
                 </View>
@@ -346,7 +390,6 @@ const EventDetails = ({ route, navigation }: any) => {
                     event && (
                     <TouchableOpacity onPress={() => {
                         if (event.seats - participantsCount > 0) {
-                            setShowSplitButtons(true);
                             joinEventFunction(user.uid, event.id);
                         }
                     }}
@@ -395,10 +438,7 @@ const EventDetails = ({ route, navigation }: any) => {
             { /* Edit Button */}
             {event && event.host_id == user.uid?
            <TouchableOpacity
-                onPress={()=> navigation.navigate('EditEvent', {
-                    event_id: eventID, 
-                    refresh: fetchEventData
-                })}
+                onPress={handleEditPress}
                 style={styles.headerRightContainer}
            >
                 <View style={styles.headerIconContainer}>

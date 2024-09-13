@@ -189,7 +189,7 @@ const AddEvent = ({navigation}: any) => {
             
         }
 
-        // Check location
+        // Validate location
         if (!location.trim()) {
             Alert.alert('Validation Error', 'Please enter a location.');
             return false;

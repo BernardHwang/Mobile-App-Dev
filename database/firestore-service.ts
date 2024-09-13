@@ -22,6 +22,9 @@ export const getEvents = async (event_id: string): Promise<any> => {
       if (data.end_date && data.end_date.toDate) {
           data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
       }
+      if (data.seats){
+        data.seats = parseInt(data.seats, 10);;
+      }
     // Return the event data, including the document ID
     return {
       id: eventDoc.id,  // Firestore document ID
@@ -56,7 +59,10 @@ export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[
             if (data.end_date && data.end_date.toDate) {
                 data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
             }
-            eventsData.push({ id: doc.id, ...data });
+            if (data.seats){
+                data.seats = parseInt(data.seats, 10);;
+            }
+            eventsData.push({ event_id: doc.id, ...data });
         });
         
         return eventsData;
@@ -86,7 +92,10 @@ export const getJoinEventsByUserIDOnline = async (user_id: string): Promise<any[
             if (eventData.end_date && eventData.end_date.toDate) {
                 eventData.end_date = eventData.end_date.toDate().toISOString(); // Convert to JavaScript Date
             }
-            joinedEvents.push({ id: doc.id, ...eventData });
+            if (eventData.seats){
+              eventData.seats = parseInt(eventData.seats, 10);;
+            }
+            joinedEvents.push({ event_id: doc.id, ...eventData });
           }
       }
 

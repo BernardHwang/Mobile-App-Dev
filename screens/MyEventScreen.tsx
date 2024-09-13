@@ -51,7 +51,6 @@ const MyEventScreen = ({ navigation }:any) => {
       const hostEventOffline = await getHostEventsByUserIDOffline(await getDBConnection(),user.uid);
       setHostedEvents(hostEventOffline);
       console.log('Fetch host event offline');
-      console.log(hostedEvents);
     }
   };
 
@@ -73,7 +72,7 @@ const MyEventScreen = ({ navigation }:any) => {
     return(
       <TouchableOpacity
       style={ExternalStyleSheet.eventCard}
-      onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEventsForHost})}
+      onPress={()=>navigation.navigate('EventDetails', { event_id: item.event_id, refresh: fetchEventsForHost})}
     >
       {item.image ? (
         <Image
@@ -172,47 +171,7 @@ const MyEventScreen = ({ navigation }:any) => {
   const styles = StyleSheet.create({
     page: {
       flex: 1,
-    },
-    eventCard: {
-      backgroundColor: '#f8f8f8',
-      borderRadius: 8,
-      padding: 10,
-      marginVertical: 8,
-    },
-    eventImage: {
-      width: '100%',
-      height: 200,
-      borderRadius: 8,
-      marginBottom: 10,
-    },
-    noImagePlaceholder: {
-      width: '100%',
-      height: 200,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#e0e0e0',
-      borderRadius: 8,
-      marginBottom: 10,
-    },
-    eventTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-    eventTime: {
-      fontSize: 14,
-      color: '#888',
-    },
-    eventsHeader: {
-      fontWeight: 'bold',
-      paddingLeft: 15,
-      fontSize: 25,
-      paddingTop: 15,
-    },
-    noEventsText: {
-      textAlign: 'center',
-      marginTop: 20,
-      fontSize: 16,
-      color: '#888',
+      backgroundColor: '#e6e6fa'
     },
     eventInfo: {
       flexDirection: 'row',
