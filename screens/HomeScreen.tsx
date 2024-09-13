@@ -11,6 +11,7 @@ import { fetchEventsForSelectedDay } from '../database/firestore-service';
 import { checkInternetConnection } from '../database/sync';
 import { getDBConnection, getEventsByDate } from '../database/db-services';
 import { useFocusEffect } from '@react-navigation/native';
+import  ExternalStyleSheet  from '../ExternalStyleSheet';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -55,22 +56,22 @@ const HomeScreen = ({ navigation }:any) => {
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.eventCard}
+      style={ExternalStyleSheet.eventCard}
       onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEvents })}
     >
       {item.image ? (
         <Image
           source={{ uri: item.image }}
-          style={styles.eventImage}
+          style={ExternalStyleSheet.eventImage}
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.noImagePlaceholder}>
+        <View style={ExternalStyleSheet.noImagePlaceholder}>
           <Text>No Image</Text>
         </View>
       )}
-      <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{item.start_time}</Text>
+      <Text style={ExternalStyleSheet.eventTitle}>{item.name}</Text>
+      <Text style={ExternalStyleSheet.eventTime}>{item.start_time}</Text>
     </TouchableOpacity>
   );
 
