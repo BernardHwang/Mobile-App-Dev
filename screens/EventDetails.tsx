@@ -9,8 +9,9 @@ import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getPartic
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import axios from 'axios';
+import OpenMap from 'react-native-open-maps';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
@@ -135,13 +136,19 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const cancelEvent = async (id: string) => {
         try{
-            const db = await getDBConnection();
-            await cancelEventOnline(id);
-            await cancelEventLocally(db, id);
-            await _sync();
-            setCancel(false);
-            route.params.refresh();
-            navigation.goBack();
+            const connected = await checkInternetConnection();
+            if (connected){
+                const db = await getDBConnection();
+                await cancelEventOnline(id);
+                await cancelEventLocally(db, id);
+                await _sync();
+                setCancel(false);
+                route.params.refresh();
+                navigation.goBack();
+            }
+            else{
+                Alert.alert('Failed to cancel event! Please connect to internet.');
+            }
         } catch(error) {
             console.error("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
@@ -151,11 +158,17 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const joinEventFunction = async (participant_id: string, event_id: string) => {
         try{
-            await joinEvent(participant_id, event_id);
-            await _sync();
-            setJoin(!join);
-            checkIfJoined();
-            socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
+            const connected = await checkInternetConnection();
+            if (connected){
+                await joinEvent(participant_id, event_id);
+                await _sync();
+                setJoin(!join);
+                checkIfJoined();
+                socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
+            }
+            else {
+                Alert.alert('Failed to join event! Please connect to internet.')
+            }
         }catch(error){
             console.error("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
@@ -164,11 +177,17 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const unjoinEventFunction = async (participant_id: string, event_id: string) => {
         try{
-            await unjoinEvent(participant_id, event_id);
-            await _sync();
-            setJoin(!join);
-            checkIfJoined();
-            socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
+            const connected = await checkInternetConnection();
+            if (connected){
+                await unjoinEvent(participant_id, event_id);
+                await _sync();
+                setJoin(!join);
+                checkIfJoined();
+                socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
+            }
+            else{
+                Alert.alert('Failed to unjoin event! Please connect to internet.')
+            }
         }catch(error){
             console.error("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
@@ -271,6 +290,10 @@ const EventDetails = ({ route, navigation }: any) => {
                                 latitudeDelta: 0.01,
                                 longitudeDelta: 0.01,
                             }}
+                            onPress={() => OpenMap({
+                                latitude: coordinates.latitude,
+                                longitude: coordinates.longitude
+                            })}
                         >
                             <Marker
                                 coordinate={coordinates}
