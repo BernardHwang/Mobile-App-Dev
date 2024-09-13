@@ -235,3 +235,30 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     console.error('Error fetching events:', error);
   }
 };
+
+export const getEventNotificationStatus = async (event_id: string, user_id: string) => {
+  const participantDoc = await firestore().collection('events').doc(event_id).collection('eventParticipant').doc(user_id).get();
+  const notificationStatus = participantDoc.data()?.notification_status;
+  
+  return notificationStatus;
+}
+
+export const changeNotificationStatus = async (event_id: string, user_id: string) => {
+  const eventsParticipantsRef = firestore().collection('events').doc(event_id).collection('eventParticipant').doc(user_id);
+
+  // Get the current notification status
+  const participantDoc = await eventsParticipantsRef.get();
+
+  if (participantDoc.exists) {
+    const notificationStatus = participantDoc.data()?.notification_status;
+
+    // Toggle the notification status
+    await eventsParticipantsRef.update({
+      notification_status: !notificationStatus,
+    });
+
+    console.log(`Notification status changed to ${!notificationStatus}`);
+  } else {
+    console.error('Participant not found');
+  }
+};

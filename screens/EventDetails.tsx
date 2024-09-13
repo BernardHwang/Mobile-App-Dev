@@ -5,7 +5,7 @@ import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { cancelEventLocally, getDBConnection, getEventsByEventID, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
-import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
+import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent, getEventNotificationStatus, changeNotificationStatus } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
@@ -31,7 +31,7 @@ const EventDetails = ({ route, navigation }: any) => {
     const [eventID, setEventID] = useState(route.params.event_id);
     const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
     const [loading, setLoading] = useState(true);
-    const [isBellOff, setIsBellOff] = useState(true);
+    const [isBellOff, setIsBellOff] = useState();
     const [isEventEnded, setIsEventEnded] = useState<boolean>(false);
     
     // Fetch participants on mount and check if the user is already a participant
@@ -81,6 +81,8 @@ const EventDetails = ({ route, navigation }: any) => {
             fetchEventData();
             checkIfJoined();
         });
+
+        fetchEventNotificationStatus();
     
         return unsubscribe;
     }, [navigation, eventID]);
@@ -106,6 +108,11 @@ const EventDetails = ({ route, navigation }: any) => {
 
         fetchCoordinates();
     }, [event]);
+
+    const fetchEventNotificationStatus = async () => {
+        const notificationStatus = await getEventNotificationStatus(eventID, user.uid)
+        setIsBellOff(notificationStatus);
+    }
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const imgHeight = scrollY.interpolate({
@@ -326,8 +333,8 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff)}} style={styles.remindBtn}>
-                        <MaterialCommunityIcons name={isBellOff ? "bell-off-outline":"bell-ring-outline"} size={23} color='#3e2769'/>
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff);changeNotificationStatus(eventID, user.uid);socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})}} style={styles.remindBtn}>
+                        <MaterialCommunityIcons name={isBellOff ? "bell-ring-outline":"bell-off-outline"} size={23} color='#3e2769'/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
                         <Text style={styles.footerBtnTxt}>Unjoin Event</Text>

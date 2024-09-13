@@ -74,8 +74,6 @@ eventsCollectionRef.onSnapshot(async snapshot => {
 });
 
 
-
-
 io.on('connection', (socket) => {
     console.log('A user connected');
 
@@ -115,7 +113,7 @@ io.on('connection', (socket) => {
     
             // Emit the notification for participation changes (either success or failure)
             console.log(notification);
-            io.emit('participationNotification', { notification, userId });
+            socket.emit('participationNotification', { notification, userId });
     
         } catch (error) {
             console.error('Error checking for user document:', error);
@@ -157,7 +155,7 @@ io.on('connection', (socket) => {
     
             // Emit the notification for participation changes (either success or failure)
             console.log(notification);
-            io.emit('participationNotification', { notification, userId });
+            socket.emit('participationNotification', { notification, userId });
     
         } catch (error) {
             console.error('Error checking for user document:', error);
@@ -182,34 +180,31 @@ io.on('connection', (socket) => {
                 .get();
     
             let notification = {}; 
-    
-            if (!participantDocRef.exists) {
+            const notificationState = participantDocRef.data().notification_status;
+
+            if (notificationState) {
                 // User successfully left the event
                 notification = {
-                    title: 'Successfully Left Event',
-                    message: `Congratulations ${userData.name}, you left the event: ${eventData.name}.`
+                    title: `Turn On Notification`,
+                    message: `Dear ${userData.name}, any update from ${eventData.name} will be notified to you.`
                 };
             } else {
                 // User failed to leave the event
                 notification = {
-                    title: 'Failed to Leave Event',
-                    message: `Unfortunately ${userData.name}, you failed to leave the event: ${eventData.name}.`
+                    title: `Turn Off Notification`,
+                    message: `Dear ${userData.name}, any update from ${eventData.name} will not be notified to you.`
                 };
             }
     
             // Emit the notification for participation changes (either success or failure)
             console.log(notification);
-            io.emit('participationNotification', { notification, userId });
+            socket.emit('participationNotification', { notification, userId });
     
         } catch (error) {
             console.error('Error checking for user document:', error);
         }
     });
 
-    socket.on('message', (msg) => {
-        console.log('Message received:', msg);
-        io.emit('message', msg);
-    });
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
