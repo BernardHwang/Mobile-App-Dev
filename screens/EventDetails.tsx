@@ -67,7 +67,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 setEvent(theEvent);
                 console.log('Updated Event Data: ', event);
                 const currentTime = moment(); // Get current time
-                const eventEndTime = moment(convertTimestampToDate(theEvent.end_date));
+                const eventEndTime = moment(theEvent.end_date);
                 setIsEventEnded(eventEndTime.isBefore(currentTime));
                 return theEvent;
             }
@@ -202,10 +202,6 @@ const EventDetails = ({ route, navigation }: any) => {
         }
     }
 
-    const convertTimestampToDate = (timestamp) => {
-        return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    };
-
     const changeNotificationStatus = async () => {
         await changeEventNotificationStatus(eventID, user.uid);
         socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})
@@ -274,15 +270,15 @@ const EventDetails = ({ route, navigation }: any) => {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>Start</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('h:mm A')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('h:mm A')}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>End</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('h:mm A')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('h:mm A')}</Text>
                             </View>
                         </View>
                     </View>

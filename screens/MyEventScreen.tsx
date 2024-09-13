@@ -50,6 +50,7 @@ const MyEventScreen = ({ navigation }:any) => {
       const hostEventOffline = await getHostEventsByUserIDOffline(await getDBConnection(),user.uid);
       setHostedEvents(hostEventOffline);
       console.log('Fetch host event offline');
+      console.log(hostedEvents);
     }
   };
 
@@ -66,12 +67,8 @@ const MyEventScreen = ({ navigation }:any) => {
     }
   };
 
-  const convertTimestampToDate = (timestamp) => {
-    return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-  };
-
   const renderEventItem = ({ item }) => {
-    const isEventActive = moment().isBefore(convertTimestampToDate(item.end_date));
+    const isEventActive = moment().isBefore(item.end_date);
     return(
       <TouchableOpacity
       style={styles.eventCard}
@@ -92,7 +89,7 @@ const MyEventScreen = ({ navigation }:any) => {
         <View style={styles.eventTextContainer}>
           <Text style={styles.eventTitle}>{item.name}</Text>
           <Text style={styles.eventTime}>
-            {moment(convertTimestampToDate(item.start_date)).format('MMMM Do YYYY, h:mm A')}
+            {moment(item.start_date).format('MMMM Do YYYY, h:mm A')}
           </Text>
         </View>
         <View style={styles.statusContainer}>
