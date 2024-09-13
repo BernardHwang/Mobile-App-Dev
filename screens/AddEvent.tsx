@@ -28,7 +28,6 @@ const AddEvent = ({navigation}: any) => {
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
-    const [isOnline, setIsOnline] = useState<boolean>(true);
     const [errorMessage, setErrorMessage] = useState('');
     const defaultImages = [
         {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
@@ -37,22 +36,6 @@ const AddEvent = ({navigation}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
-
-    const checkConnection = async () => {
-        const connected = await checkInternetConnection();
-        setIsOnline(!!connected);
-        if (!connected) {
-            Alert.alert(
-                'No Internet Connection',
-                'You are offline. You cannot create or update events while offline.',
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
-        }
-    };
-
-    useEffect(()=>{
-        checkConnection();
-    },[navigation])
 
     const handleChoosePhoto = () => {
         launchImageLibrary(
