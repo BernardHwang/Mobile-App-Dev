@@ -267,7 +267,7 @@ export const getEventNotificationStatus = async (event_id: string, user_id: stri
   return notificationStatus;
 }
 
-export const changeNotificationStatus = async (event_id: string, user_id: string) => {
+export const changeEventNotificationStatus = async (event_id: string, user_id: string) => {
   const eventsParticipantsRef = firestore().collection('events').doc(event_id).collection('eventParticipant').doc(user_id);
 
   // Get the current notification status
