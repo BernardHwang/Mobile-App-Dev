@@ -25,6 +25,7 @@ const ExternalStyleSheet=StyleSheet.create({
       eventTitle: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: '#26294D'
       },
       eventTime: {
         fontSize: 14,
@@ -35,6 +36,7 @@ const ExternalStyleSheet=StyleSheet.create({
         paddingLeft: 15,
         fontSize: 25,
         paddingTop: 15,
+        color: '#330c94'
       },
       noEventsText: {
         textAlign: 'center',

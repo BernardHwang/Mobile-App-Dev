@@ -2,15 +2,27 @@ import { SQLiteDatabase, enablePromise, openDatabase } from 'react-native-sqlite
 import { Event } from '../Types';
 import moment from 'moment';
 const databaseName = 'db';
+let db: SQLiteDatabase | null = null;
 
 enablePromise(true);
 
 export const getDBConnection = async() => {
-    return openDatabase(
-        {name: `${databaseName}`},
-        openCallback,
-        errorCallback
-    );
+    if (db !== null) {
+        console.log('Database connection already open.');
+        return db; // Return the already opened database
+      }
+    
+      try {
+        db = await openDatabase(
+          { name: `${databaseName}`}, // Ensure the correct name and location
+          openCallback,
+          errorCallback
+        );
+        return db; // Return the database connection after opening
+      } catch (error) {
+        console.error('Error opening database: ', error);
+        throw error; // Throw error for further handling
+      }
 }
 
 const openCallback = () => {
@@ -21,6 +33,22 @@ const errorCallback = (err: any) => {
     console.log('Error in opening the database: '+err);
 }
 
+export const closeDBConnection = async (): Promise<void> => {
+    if (db !== null) {
+      console.log('Closing database...');
+      try {
+        await db.close(); // Close the database connection
+        console.log('Database closed successfully.');
+      } catch (error) {
+        console.error('Error closing the database: ', error);
+      } finally {
+        db = null; // Reset the global db variable
+      }
+    } else {
+      console.log('Database connection was already closed.');
+    }
+  };
+  
 export const createUsersTable = async(db: SQLiteDatabase) => {
     try{
         const query = `CREATE TABLE IF NOT EXISTS users (
