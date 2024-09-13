@@ -56,7 +56,7 @@ const EventDetails = ({ route, navigation }: any) => {
           setParticipantsCount(participants.length);
           setShowSplitButtons(isParticipant);
         } catch (error) {
-          console.error("Error fetching participants: ", error);
+          console.log("Error fetching participants: ", error);
         }
       };
 
@@ -72,7 +72,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 return theEvent;
             }
         } catch (error) {
-            console.error("Error fetching event data:", error);
+            console.log("Error fetching event data:", error);
         }
     };    
 
@@ -102,7 +102,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 });
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching location data:', error);
+                console.log('Error fetching location data:', error);
             }
         };
 
@@ -157,7 +157,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 Alert.alert('Failed to cancel event! Please connect to internet.');
             }
         } catch(error) {
-            console.error("Error canceling event: ", error);
+            console.log("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
         }
         
@@ -177,7 +177,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 Alert.alert('Failed to join event! Please connect to internet.')
             }
         }catch(error){
-            console.error("Error joining event: ", error);
+            console.log("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
         }
     }
@@ -196,7 +196,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 Alert.alert('Failed to unjoin event! Please connect to internet.')
             }
         }catch(error){
-            console.error("Error unjoining event: ", error);
+            console.log("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
         }
     }
