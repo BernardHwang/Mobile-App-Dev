@@ -139,7 +139,7 @@ const AddEvent = ({navigation}: any) => {
     
             return newId;
         } catch (error) {
-            console.error("Transaction failed: ", error);
+            console.log("Transaction failed: ", error);
             throw error;
         }
     };
@@ -250,7 +250,7 @@ const AddEvent = ({navigation}: any) => {
                     routes: [{ name: 'My Event' }],
                 });
             } catch (error) {
-                console.error('Error creating event:', error);
+                console.log('Error creating event:', error);
                 Alert.alert('Error', 'An error occurred while creating the event. Please try again.');
             }
         }
