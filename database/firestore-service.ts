@@ -13,19 +13,10 @@ export const getEvents = async (event_id: string): Promise<any> => {
       return null; // Return null if the document doesn't exist
     }
 
-    const data = eventDoc.data();
-
-      // Convert Firestore Timestamps to JavaScript Dates
-      if (data.start_date && data.start_date.toDate) {
-          data.start_date = data.start_date.toDate().toISOString(); // Convert to JavaScript Date
-      }
-      if (data.end_date && data.end_date.toDate) {
-          data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
-      }
     // Return the event data, including the document ID
     return {
       id: eventDoc.id,  // Firestore document ID
-      ...data // Spread the event data fields
+      ...eventDoc.data() // Spread the event data fields
     };
     
   } catch (error) {
@@ -47,16 +38,7 @@ export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[
 
         const eventsData: any[] = [];
         snapshot.forEach(doc => {
-            const data = doc.data();
-
-            // Convert Firestore Timestamps to JavaScript Dates
-            if (data.start_date && data.start_date.toDate) {
-                data.start_date = data.start_date.toDate().toISOString(); // Convert to JavaScript Date
-            }
-            if (data.end_date && data.end_date.toDate) {
-                data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
-            }
-            eventsData.push({ id: doc.id, ...data });
+            eventsData.push({ id: doc.id, ...doc.data() });
         });
         
         return eventsData;
@@ -80,12 +62,6 @@ export const getJoinEventsByUserIDOnline = async (user_id: string): Promise<any[
           
           if (!participantsSnapshot.empty) {
             const eventData = doc.data();
-            if (eventData.start_date && eventData.start_date.toDate) {
-                eventData.start_date = eventData.start_date.toDate().toISOString(); // Convert to JavaScript Date
-            }
-            if (eventData.end_date && eventData.end_date.toDate) {
-                eventData.end_date = eventData.end_date.toDate().toISOString(); // Convert to JavaScript Date
-            }
             joinedEvents.push({ id: doc.id, ...eventData });
           }
       }
