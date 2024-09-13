@@ -57,7 +57,7 @@ const EditProfileScreen = ({ navigation }: any) => {
         }).then(image => {
             setImage(image.path);
         }).catch((error) => {
-            console.error("Error taking photo: ", error);
+            console.log("Error taking photo: ", error);
         });
     };
 

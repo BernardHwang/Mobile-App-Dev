@@ -9,11 +9,10 @@ import { editEventLocally, getDBConnection } from '../database/db-services';
 import { updateEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
-import { Timestamp } from 'firebase/firestore';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
-    // const { event } = route.params;
+    
     const [eventID, setEventID] = useState<string>(route.params.event_id);
     const [event, setEvent] = useState<any>(null);
     const [eventTitle, setTitle] = useState<string>('');
@@ -56,7 +55,7 @@ const EditEvent = ({navigation, route}: any) => {
                     console.log('No event details returned');
                 }
             } catch (error) {
-                console.error("Error loading event: ", error);
+                console.log("Error loading event: ", error);
             }
         };
         loadEvent();
@@ -220,7 +219,7 @@ const EditEvent = ({navigation, route}: any) => {
                 });
 
             } catch (error) {
-                console.error("Error editing event: ", error);
+                console.log("Error editing event: ", error);
                 Alert.alert('Error', 'An error occurred while updating the event. Please try again.');
             }
         }

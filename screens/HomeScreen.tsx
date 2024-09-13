@@ -20,22 +20,6 @@ const HomeScreen = ({ navigation }:any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
-  // useEffect(() => {
-  //   fetchEvents();
-  
-  //   const unsubscribe = firestore()
-  //     .collection('users')
-  //     .doc(user.uid)
-  //     .collection('notifications')
-  //     .onSnapshot((snapshot) => {
-  //       setNotificationCount(snapshot.size);
-  //     }, (error) => {
-  //       console.error('Error fetching real-time notifications:', error);
-  //     });
-      
-  //   return () => unsubscribe();
-  // }, [navigation, selectedDay, user.uid]);
-
   useFocusEffect(
     useCallback(() => {
       // Fetch events every time the screen comes into focus
@@ -49,7 +33,7 @@ const HomeScreen = ({ navigation }:any) => {
         .onSnapshot((snapshot) => {
           setNotificationCount(snapshot.size);
         }, (error) => {
-          console.error('Error fetching real-time notifications:', error);
+          console.log('Error fetching real-time notifications:', error);
         });
       
       return () => unsubscribe(); // Clean up on unmount

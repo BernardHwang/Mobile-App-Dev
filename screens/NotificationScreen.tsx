@@ -30,7 +30,7 @@ const NotificationScreen = () => {
       
       setNotifications(notificationDocs);
     } catch (error) {
-      console.error("Error fetching notifications: ", error);
+      console.log("Error fetching notifications: ", error);
     }
   };
 
@@ -49,7 +49,7 @@ const NotificationScreen = () => {
         prevNotifications.filter((notification) => notification.id !== notificationId)
       );
     } catch (error) {
-      console.error("Error deleting notification: ", error);
+      console.log("Error deleting notification: ", error);
     }
   };
 
