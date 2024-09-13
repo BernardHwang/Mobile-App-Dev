@@ -181,17 +181,17 @@ io.on('connection', (socket) => {
     
             let notification = {}; 
             const notificationState = participantDocRef.data().notification_status;
-            
+
             if (notificationState) {
                 // User successfully left the event
                 notification = {
-                    title: `Turn On Notification for ${eventData.name}`,
+                    title: `Turn On Notification`,
                     message: `Dear ${userData.name}, any update from ${eventData.name} will be notified to you.`
                 };
             } else {
                 // User failed to leave the event
                 notification = {
-                    title: `Turn Off Notification for ${eventData.name}`,
+                    title: `Turn Off Notification`,
                     message: `Dear ${userData.name}, any update from ${eventData.name} will not be notified to you.`
                 };
             }
