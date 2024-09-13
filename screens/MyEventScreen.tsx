@@ -8,6 +8,7 @@ import { AuthContext } from '../navigation/AuthProvider';
 import Ionicons from 'react-native-vector-icons/Ionicons'; 
 import TabButtons, { TabButtonType } from './MyEventScreenButtons';
 import { _sync, checkInternetConnection } from '../database/sync';
+import  ExternalStyleSheet  from '../ExternalStyleSheet';
 import moment from 'moment';
 
 export enum CustomTab {
@@ -71,24 +72,24 @@ const MyEventScreen = ({ navigation }:any) => {
     const isEventActive = moment().isBefore(item.end_date);
     return(
       <TouchableOpacity
-      style={styles.eventCard}
+      style={ExternalStyleSheet.eventCard}
       onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEventsForHost})}
     >
       {item.image ? (
         <Image
           source={{ uri: item.image }}
-          style={styles.eventImage}
+          style={ExternalStyleSheet.eventImage}
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.noImagePlaceholder}>
+        <View style={ExternalStyleSheet.noImagePlaceholder}>
           <Text>No Image</Text>
         </View>
       )}
       <View style={styles.eventInfo}>
         <View style={styles.eventTextContainer}>
-          <Text style={styles.eventTitle}>{item.name}</Text>
-          <Text style={styles.eventTime}>
+          <Text style={ExternalStyleSheet.eventTitle}>{item.name}</Text>
+          <Text style={ExternalStyleSheet.eventTime}>
             {moment(item.start_date).format('MMMM Do YYYY, h:mm A')}
           </Text>
         </View>
@@ -146,21 +147,21 @@ const MyEventScreen = ({ navigation }:any) => {
         onPageSelected={onPageSelected}
       >
         <View key="1" style={styles.page}>
-          <Text style={styles.eventsHeader}>Joined Events</Text>
+          <Text style={ExternalStyleSheet.eventsHeader}>Joined Events</Text>
           <FlatList
             data={joinedEvents}
             renderItem={renderEventItem}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.noEventsText}>No events joined.</Text>}
+            ListEmptyComponent={<Text style={ExternalStyleSheet.noEventsText}>No events joined.</Text>}
           />
         </View>
         <View key="2" style={styles.page}>
-          <Text style={styles.eventsHeader}>Hosted Events</Text>
+          <Text style={ExternalStyleSheet.eventsHeader}>Hosted Events</Text>
           <FlatList
             data={hostedEvents}
             renderItem={renderEventItem}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.noEventsText}>No events hosted.</Text>}
+            ListEmptyComponent={<Text style={ExternalStyleSheet.noEventsText}>No events hosted.</Text>}
           />
         </View>
       </PagerView>
