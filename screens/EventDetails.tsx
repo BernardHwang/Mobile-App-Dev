@@ -5,7 +5,7 @@ import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { cancelEventLocally, getDBConnection, getEventsByEventID, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
-import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent, getEventNotificationStatus, changeNotificationStatus } from '../database/firestore-service';
+import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent, getEventNotificationStatus, changeEventNotificationStatus } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
@@ -31,7 +31,7 @@ const EventDetails = ({ route, navigation }: any) => {
     const [eventID, setEventID] = useState(route.params.event_id);
     const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
     const [loading, setLoading] = useState(true);
-    const [isBellOff, setIsBellOff] = useState();
+    const [isBellOff, setIsBellOff] = useState(false);
     const [isEventEnded, setIsEventEnded] = useState<boolean>(false);
     
     // Fetch participants on mount and check if the user is already a participant
@@ -56,7 +56,7 @@ const EventDetails = ({ route, navigation }: any) => {
           setParticipantsCount(participants.length);
           setShowSplitButtons(isParticipant);
         } catch (error) {
-          console.log("Error fetching participants: ", error);
+          console.error("Error fetching participants: ", error);
         }
       };
 
@@ -72,7 +72,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 return theEvent;
             }
         } catch (error) {
-            console.log("Error fetching event data:", error);
+            console.error("Error fetching event data:", error);
         }
     };    
 
@@ -102,7 +102,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 });
                 setLoading(false);
             } catch (error) {
-                console.log('Error fetching location data:', error);
+                console.error('Error fetching location data:', error);
             }
         };
 
@@ -157,7 +157,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 Alert.alert('Failed to cancel event! Please connect to internet.');
             }
         } catch(error) {
-            console.log("Error canceling event: ", error);
+            console.error("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
         }
         
@@ -171,13 +171,14 @@ const EventDetails = ({ route, navigation }: any) => {
                 await _sync();
                 setJoin(!join);
                 checkIfJoined();
+                setIsBellOff(false);
                 socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
             }
             else {
                 Alert.alert('Failed to join event! Please connect to internet.')
             }
         }catch(error){
-            console.log("Error joining event: ", error);
+            console.error("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
         }
     }
@@ -196,7 +197,7 @@ const EventDetails = ({ route, navigation }: any) => {
                 Alert.alert('Failed to unjoin event! Please connect to internet.')
             }
         }catch(error){
-            console.log("Error unjoining event: ", error);
+            console.error("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
         }
     }
@@ -204,6 +205,11 @@ const EventDetails = ({ route, navigation }: any) => {
     const convertTimestampToDate = (timestamp) => {
         return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
     };
+
+    const changeNotificationStatus = async () => {
+        await changeEventNotificationStatus(eventID, user.uid);
+        socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})
+    }
 
     return (
         <Modal
@@ -333,7 +339,7 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff);changeNotificationStatus(eventID, user.uid);socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})}} style={styles.remindBtn}>
+                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff);changeNotificationStatus();}} style={styles.remindBtn}>
                         <MaterialCommunityIcons name={isBellOff ? "bell-ring-outline":"bell-off-outline"} size={23} color='#3e2769'/>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
