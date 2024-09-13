@@ -28,7 +28,7 @@ const NotificationListener = () => {
     // Listen for event notifications from the server
     socket.on('eventNotification', handleNotification);
     socket.on('participationNotification', handleNotification);
-    socket.on('notificationStatuseventNotificationStatus', handleNotification);
+    socket.on('eventNotificationStatus', handleNotification);
 
 
     // Clean up the socket listener when the component unmounts
