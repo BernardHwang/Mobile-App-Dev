@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableNativeFeedback} from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableNativeFeedback, Dimensions} from 'react-native';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -73,7 +73,7 @@ const AppButton = (props: any) => {
             onPress={props.onPress}
             disabled={props.disabled}
         >
-            <View style={[buttonStyles.button, { backgroundColor: backgroundColorTheme }]}>
+            <View style={[buttonStyles.button, { backgroundColor: backgroundColorTheme }, props.btnStyle]}>
                 <Text style={buttonStyles.buttonText}>{props.title}</Text>
             </View>
         </TouchableNativeFeedback>
