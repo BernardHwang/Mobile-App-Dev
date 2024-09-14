@@ -3,6 +3,7 @@ import auth, { updateProfile, EmailAuthProvider, deleteUser, updatePassword } fr
 import {Alert} from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import storage from "@react-native-firebase/storage";
+import { getJoinEventsByUserIDOnline } from '../database/firestore-service';
 
 export const AuthContext = createContext();
 
@@ -50,6 +51,49 @@ export const AuthProvider = ({children}) => {
         // reauthenticate the user
         await user.reauthenticateWithCredential(credential);
         console.log('User reauthenticate');
+    }
+
+    const deleteUserFirestore = async(userID) => {
+        try{
+            const docRef = firestore().collection('users').doc(userID);
+            const deleteSubcollection = async (collectionPath) => {
+                const subCollectionRef = firestore().collection(collectionPath);
+                const querySnapshot = await subCollectionRef.get();
+                const batch = firestore().batch();
+
+                querySnapshot.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                await batch.commit();
+            };
+            await deleteSubcollection(`users/${userID}/notifications`);
+            docRef.delete();
+            console.log('User data is deleted in Firestore');
+            
+            await deleteUserJoinEvent(userID);
+        }catch(error){
+            console.log('Error deleting user in Firestore: ', error);
+        }
+    }
+
+    const deleteUserJoinEvent = async(userID) => {
+        try{
+            const joinedEvents = await getJoinEventsByUserIDOnline(userID);
+            const batch = firestore().batch();
+        
+            joinedEvents.forEach(doc => {
+                const eventRef = firestore().collection('events').doc(doc.event_id).collection('eventParticipant').doc(userID);
+                batch.delete(eventRef);
+            });
+
+            await batch.commit();
+            joinedEvents.forEach(doc => {
+                unjoinEvent(userID, doc.id);
+            })
+        }catch(error){
+            console.log('Error delete user joined event: ', error);
+        }
     }
 
     return (
@@ -213,7 +257,8 @@ export const AuthProvider = ({children}) => {
                     reauthenticateUser(password)
                         .then(() => {
                             // Delete user from firestore
-                            return firestore().collection('users').doc(user.uid).delete();
+                            return deleteUserFirestore(user.uid);
+                            //return firestore().collection('users').doc(user.uid).delete();
                         }).then(() => {
                             // Delete user from Firebase Authentication
                             return deleteUser(user);

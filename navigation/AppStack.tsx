@@ -56,7 +56,7 @@ const DrawerNav = () => {
         >
             <Drawer.Screen
                 name="Home"
-                component={BottomTabNav}
+                component={HomeStackNav}
                 options={{
                     drawerLabel: "Home",
                     drawerIcon: () => (<Icon name="home" size={24} />)
@@ -120,6 +120,35 @@ const BottomTabNav = () => {
         </Tab.Navigator>
     );
 };
+
+const HomeStackNav = () => {
+    return(
+        <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen
+                name="BottomTabNav" 
+                component={BottomTabNav}
+            />
+
+            <Stack.Screen
+                name="AddEvent"
+                component={AddEvent}
+            />
+            <Stack.Screen
+                name="EventDetails"
+                component={EventDetails}
+            />
+            <Stack.Screen
+                name="EditEvent"
+                component={EditEvent}
+            />
+            <Stack.Screen
+                name="Notification"
+                component={NotificationScreen}
+                options={{ headerShown: true }}
+            />
+        </Stack.Navigator>
+    );
+}
 
 const EventStackNav = () => {
     return (

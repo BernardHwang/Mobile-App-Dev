@@ -9,8 +9,8 @@ const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Initialize the socket connection
     //const socketInstance = io('http://192.168.1.113:3000'); // Change to 'http://your-ip-address:3000
-    //const socketInstance = io('http://127.0.0.1:3000'); // Change to 'http://your-ip-address:3000
-    const socketInstance = io('http://10.0.2.2:3000');
+    const socketInstance = io('http://127.0.0.1:3000'); // Change to 'http://your-ip-address:3000
+    //const socketInstance = io('http://10.0.2.2:3000');
     setSocket(socketInstance);
 
     // Log connection status
