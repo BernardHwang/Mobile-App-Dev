@@ -92,7 +92,6 @@ const NotificationScreen = () => {
             </Swipeable>
           )}
         />
-
       )}
     </View>
   );
