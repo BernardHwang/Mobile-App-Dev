@@ -4,8 +4,6 @@ import {Alert} from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import storage from "@react-native-firebase/storage";
 
-//TODO: sync with offline database
-
 export const AuthContext = createContext();
 
 export const AuthProvider = ({children}) => {
@@ -176,7 +174,11 @@ export const AuthProvider = ({children}) => {
                             Alert.alert('Error', 'This email is not registered.');
                         }
                     }catch(error){
-                        Alert.alert('Reset Error', 'There was an error sending the password reset link.');
+                        if(error.code == 'auth/network-request-failed'){
+                                Alert.alert("Network Error", "Please check your connection.");
+                        }else{
+                            Alert.alert('Reset Error', 'There was an error sending the password reset link.');
+                        }
                         console.log(error);
                     }finally{
                         await user.reload();
@@ -208,25 +210,26 @@ export const AuthProvider = ({children}) => {
                 },
 
                 deleteAccount: async (email, password) => {
-                    try{
-                        reauthenticateUser();
-                        // Delete user from firestore
-                        await firestore().collection('users').doc(user.uid).delete();
-                        console.log("Deleted on firestore");
-
-                        // Delete user from Firebase Authentication
-                        await firestore().collection('users').doc(user.uid).delete();
-                        console.log("Deleted on firestore");
-
-                        // Delete user from Firebase Authentication
-                        await deleteUser(user);
-                        console.log("Deleted on firebase auth");
-
-                        Alert.alert('Account deleted', 'Your account has been deleted successfully.');
-                    }catch(error){
-                        console.error(error);
-                        Alert.alert('Error', 'There was an error deleting your account.');
-                    }
+                    reauthenticateUser(password)
+                        .then(() => {
+                            // Delete user from firestore
+                            return firestore().collection('users').doc(user.uid).delete();
+                        }).then(() => {
+                            // Delete user from Firebase Authentication
+                            return deleteUser(user);
+                        }).then(() => {
+                            console.log("Deleted on Firebase Auth");
+                            Alert.alert('Account deleted', 'Your account has been deleted successfully.');
+                        }).catch((error) => {
+                            if (error.code == "auth/invalid-credential"){
+                                Alert.alert('Authentication Failed', 'The password is incorrect.');
+                            } else if (error.code == 'auth/network-request-failed'){
+                                Alert.alert("Network Error", "Please check your connection.");
+                            }else{
+                                Alert.alert('Error', 'There was an error deleting your account.');
+                            }
+                            console.error(error);
+                        })
                 },
 
                 updateEmail: async (password, newEmail) => {

@@ -15,7 +15,7 @@ const ProfileScreen = ({ navigation }: any) => {
       setUserData(userDocument.data());
       console.log(userData);
     };
-    
+
     const handleEditProfile = async() => {
         const connected = await checkInternetConnection();
         if (connected){
@@ -61,14 +61,7 @@ const ProfileScreen = ({ navigation }: any) => {
     const handleDeleteAccount = async() => {
         const connected = await checkInternetConnection();
         if (connected){
-            Alert.alert(
-                "Delete Account",
-                "Are you sure you want to delete your account? This action cannot be undone.",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Delete", onPress: deleteAccount, style: "destructive" }
-                ]
-            );
+            navigation.navigate('Delete Account');
         }
         else{
             Alert.alert(
@@ -92,7 +85,7 @@ const ProfileScreen = ({ navigation }: any) => {
                 </View>
                 <Text style={styles.nameText}>{user.displayName}</Text>
                 <Text style={styles.infoText}>{user.email}</Text>
-                <Text style={styles.infoText}>{userData.phone}</Text>
+                <Text style={styles.infoText}>{userData?.phone}</Text>
             </View>
             <View style={styles.touchableContainer}>
                 <ProfileActionButton

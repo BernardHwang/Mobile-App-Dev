@@ -138,6 +138,54 @@ export const EditPasswordScreen = () => {
     );
 }
 
+export const DeleteAccountScreen = () => {
+    const { loading,user, deleteAccount } = useContext(AuthContext);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [passwordErr, setPasswordErr] = useState('');
+
+    const handlePasswordChange = (input: any) => {
+        setCurrentPassword(input);
+        const { isValid, errorMessage } = passwordValidation(input);
+        setPasswordErr(errorMessage);
+        return isValid;
+    }
+
+    const handleDelete = () => {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to delete your account? This action cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "Delete", onPress: ()=>{deleteAccount(user.email, currentPassword)}, style: "destructive" }
+            ]
+        );
+    }
+
+    return (
+        <View style={styles.screen}>
+            <View style={styles.container}>
+                <Text style={styles.header}>Delete Account</Text>
+                <Text style={styles.instructions}>
+                    For security reasons, you need to re-authenticate by entering your current password to delete your account.
+                </Text>
+                <InputWithLabel
+                    label="Current Password"
+                    value={currentPassword}
+                    error={passwordErr}
+                    onChangeText={handlePasswordChange}
+                    placeholder="Enter current password"
+                    password
+                />
+
+                <AppButton title="Delete Account" disabled={loading} onPress={handleDelete} />
+                <Text style={styles.note}>
+                    Note: This action is irreversible. Once deleted all your data will be removed.
+                </Text>
+            </View>
+        </View>
+    );
+};
+
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
