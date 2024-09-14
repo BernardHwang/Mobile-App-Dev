@@ -319,7 +319,7 @@ const EditEvent = ({navigation, route}: any) => {
                                 textInput: {
                                 height: 40,
                                 paddingLeft: 10,
-                                backgroundColor: '#eae4f0',
+                                backgroundColor: '#dcd8e8',
                                 fontSize: 14,
                                 flex: 1,
                                 },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 17,
-        backgroundColor: '#fdf1f0'
+        backgroundColor: '#e6e6fa'
     },
     header: {
         flexDirection: 'row',
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderColor: 'transparent',
         borderWidth: 1,
-        backgroundColor: '#eae4f0',
+        backgroundColor: '#dcd8e8',
         paddingVertical: 9,
         paddingHorizontal: 10,
         borderRadius: 4,
