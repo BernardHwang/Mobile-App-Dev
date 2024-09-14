@@ -150,15 +150,15 @@ const ProfileStackNav = () => {
                 options={{ headerShown: false }}
             />
             <Stack.Screen
-                name="EditProfile"
+                name="Edit Profile"
                 component={EditProfileScreen}
             />
             <Stack.Screen
-                name="EditEmail"
+                name="Edit Email"
                 component={EditEmailScreen}
             />
             <Stack.Screen
-                name="EditPassword"
+                name="Edit Password"
                 component={EditPasswordScreen}
             />
         </Stack.Navigator>

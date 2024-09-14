@@ -1,9 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, Dimensions } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {ProfileActionButton} from '../UI';
 import firestore from '@react-native-firebase/firestore';
+import { checkInternetConnection } from '../database/sync';
 
 const ProfileScreen = ({ navigation }: any) => {
     const { user,resetPassword , updateEmail, deleteAccount, logout } = useContext(AuthContext);
@@ -12,17 +13,70 @@ const ProfileScreen = ({ navigation }: any) => {
     const getUserData = async () => {
       const userDocument = await firestore().collection('users').doc(user.uid).get();
       setUserData(userDocument.data());
+      console.log(userData);
     };
+    
+    const handleEditProfile = async() => {
+        const connected = await checkInternetConnection();
+        if (connected){
+            navigation.navigate('Edit Profile');
+        }
+        else{
+            Alert.alert(
+                'No Internet Connection',
+                'Failed to edit profile! Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
+    }
 
-    const handleDeleteAccount = () => {
-        Alert.alert(
-            "Delete Account",
-            "Are you sure you want to delete your account? This action cannot be undone.",
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Delete", onPress: deleteAccount, style: "destructive" }
-            ]
-        );
+    const handleEditEmail = async() => {
+        const connected = await checkInternetConnection();
+        if (connected){
+            navigation.navigate('Edit Email');
+        }
+        else{
+            Alert.alert(
+                'No Internet Connection',
+                'Failed to edit email! Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
+    }
+
+    const handleEditPassword = async() => {
+        const connected = await checkInternetConnection();
+        if (connected){
+            navigation.navigate('Edit Password');
+        }
+        else{
+            Alert.alert(
+                'No Internet Connection',
+                'Failed to edit password! Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
+    }
+
+    const handleDeleteAccount = async() => {
+        const connected = await checkInternetConnection();
+        if (connected){
+            Alert.alert(
+                "Delete Account",
+                "Are you sure you want to delete your account? This action cannot be undone.",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", onPress: deleteAccount, style: "destructive" }
+                ]
+            );
+        }
+        else{
+            Alert.alert(
+                'No Internet Connection',
+                'Failed to delete account! Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
     };
 
     useEffect(()=>{
@@ -44,19 +98,19 @@ const ProfileScreen = ({ navigation }: any) => {
                 <ProfileActionButton
                     title='Edit Profile'
                     iconName='account-edit'
-                    onPress={() => navigation.navigate('EditProfile')}
+                    onPress={handleEditProfile}
                 />
 
                 <ProfileActionButton
                     title='Email Address'
                     iconName='email'
-                    onPress={() => navigation.navigate('EditEmail')}
+                    onPress={handleEditEmail}
                 />
 
                 <ProfileActionButton
                     title='Password'
                     iconName='lock'
-                    onPress={() => navigation.navigate('EditPassword')}
+                    onPress={handleEditPassword}
                 />
 
                 <ProfileActionButton

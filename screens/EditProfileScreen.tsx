@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Platform, ActionSheetIOS } from "react-native";
+import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Platform, ActionSheetIOS, ScrollView, Dimensions } from "react-native";
 import { AuthContext } from '../navigation/AuthProvider';
 import { InputWithLabel, AppButton } from '../UI';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -140,7 +140,7 @@ const EditProfileScreen = ({ navigation }: any) => {
     };
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleCameraIconPress}>
                     <ImageBackground
@@ -181,7 +181,8 @@ const EditProfileScreen = ({ navigation }: any) => {
                 <AppButton
                  title="Update"
                  onPress={handleUpdate}
-                 disabled={Boolean(nameErr || phoneErr) || loading} />
+                 disabled={Boolean(nameErr || phoneErr) || loading} 
+                 btnStyle= {{marginBottom: 50}}/>
             </View>
 
             <Modal isVisible={isModalVisible} onBackdropPress={() => setModalVisible(false)}>
@@ -203,7 +204,7 @@ const EditProfileScreen = ({ navigation }: any) => {
                     </TouchableOpacity>
                 </View>
             </Modal>
-        </View>
+        </ScrollView>
     );
 };
 
@@ -213,15 +214,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#efecf6',
         padding: 20,
         paddingTop: 30,
-        alignItems: 'center',
     },
     header: {
         alignItems: 'center',
         marginBottom: 20,
     },
     profileImage: {
-        width: 200,
-        height: 200,
+        //width: 200,
+        width: Dimensions.get('window').width * 0.45,
+        //height: 200,
+        height: Dimensions.get('window').width * 0.45,
         borderRadius: 100,
         borderWidth: 3,
         borderColor: '#fff',

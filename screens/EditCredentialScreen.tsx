@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert } from 'react-native'
+import { View, Text, StyleSheet, Alert, Dimensions } from 'react-native'
 import React, {useContext, useState} from 'react'
 import { AppButton, InputWithLabel } from '../UI';
 import { AuthContext } from '../navigation/AuthProvider';
@@ -133,9 +133,6 @@ export const EditPasswordScreen = () => {
                     password
                 />
                 <AppButton title="Confirm" disabled={loading} onPress={()=>{editPassword(currentPassword,newPassword)}} />
-                <Text style={styles.note}>
-                    Note: Once successful re-authentication, you will receive a link to update password.
-                </Text>
             </View>
         </View>
     );
@@ -149,11 +146,16 @@ const styles = StyleSheet.create({
         justifyContent: "center"
     },
     container: {
-        width:'90%',
-        height: '65%',
-        padding: 20,
-        paddingVertical: 40,
-        margin: 15,
+        //width:'90%',
+        width: Dimensions.get('window').width * 0.9,
+        //height: '65%',
+        height: Dimensions.get('window').height * 0.55,
+        //padding: 20,
+        padding: Dimensions.get('window').width * 0.05,
+        //paddingVertical: 40,
+        paddingVertical: Dimensions.get('window').width * 0.1,
+        //margin: 15,
+        margin: Dimensions.get('window').width * 0.38,
         borderRadius: 10,
         backgroundColor: "#efecf6",
         justifyContent: "center",
