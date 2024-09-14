@@ -47,7 +47,7 @@ const EditEvent = ({navigation, route}: any) => {
         };
         loadEvent();
     }, [eventID, navigation]);
-    
+
 
     // Update form fields when the event data is available
     useEffect(() => {
@@ -75,7 +75,7 @@ const EditEvent = ({navigation, route}: any) => {
                 }
             } else {
                 setEndDate(selectedDate);
-                
+
             }
         }
     };
@@ -103,7 +103,7 @@ const EditEvent = ({navigation, route}: any) => {
             }
         }
     };
-    
+
 
     const combineDateAndTime = (date: Date, time: Date): Date => {
         const combined = new Date(date);
@@ -123,25 +123,25 @@ const EditEvent = ({navigation, route}: any) => {
         }
         setGuest(input);  // Update the input field value
     };
-    
+
     const validateEmail = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
-    
+
     const handleSubmit = async () => {
         // Check event title is filled
         if (!eventTitle.trim()) {
             Alert.alert('Validation Error', 'Event title is required.');
             return;
         }
-    
+
         // Check for missing dates or times
         if (!startDate || !endDate || !startTime || !endTime) {
             Alert.alert('Validation Error', 'All date and time fields are required.');
             return;
         }
-    
+
         // Validate guest email
         if (guest.trim() != '') {
             if (!validateEmail(guest.trim())){
@@ -167,7 +167,7 @@ const EditEvent = ({navigation, route}: any) => {
             Alert.alert('Validation Error', 'Please enter an event description.');
             return false;
         }
-        
+
         return true;
     };
 
@@ -186,16 +186,16 @@ const EditEvent = ({navigation, route}: any) => {
                     image: event.image,
                     host_id: user.uid
                 };
-        
+
                 await updateEventOnline(eventData);
                 await editEventLocally(await getDBConnection(), eventData);
                 await _sync();
-        
+
                 console.log('Editing Event Data: ', eventData);
 
                 navigation.reset({
                     index: 0,
-                    routes: [{ name: 'My Event' }],
+                    routes: [{ name: 'Event' }],
                 });
 
             } catch (error) {
@@ -206,17 +206,17 @@ const EditEvent = ({navigation, route}: any) => {
     };
 
     return (
-        
+
             <ScrollView keyboardShouldPersistTaps='always'>
                 {event
                 ? (
                 <View style={styles.container}>
                     <View style={styles.header}>
-                        <TouchableOpacity style={styles.cancelBtn} 
+                        <TouchableOpacity style={styles.cancelBtn}
                         onPress={() => {
                             navigation.reset({
                                 index: 0,
-                                routes: [{ name: 'My Event' }],
+                                routes: [{ name: 'Event' }],
                             });}}
                     >
                             <Text style={styles.btnText}>Cancel</Text>
@@ -329,17 +329,17 @@ const EditEvent = ({navigation, route}: any) => {
                                 },
                                 listView: {
                                 backgroundColor: 'white',
-                                position: 'absolute', 
-                                top: 45, 
+                                position: 'absolute',
+                                top: 45,
                                 left: 0,
                                 right: 0,
-                                zIndex: 2, 
+                                zIndex: 2,
                                 },
                             }}
                             />
                         </View>
                     </View>
-                    
+
                     <InputWithIconLabel
                     orientation={'horizontal'}
                     iconName={"account-plus"}
@@ -406,8 +406,8 @@ const EditEvent = ({navigation, route}: any) => {
                         <Text>Loading event details...</Text>
                     )}
                 </ScrollView>
-            
-        
+
+
     );
 };
 
@@ -500,8 +500,8 @@ const styles = StyleSheet.create({
     selectedImage: {
         width: 100,
         height: 100,
-        borderWidth: 3,           
-        borderColor: 'black', 
+        borderWidth: 3,
+        borderColor: 'black',
         borderRadius: 10,
     },
     textInputContainer: {

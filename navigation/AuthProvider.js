@@ -1,8 +1,10 @@
 import React, {createContext, useState, useEffect} from 'react';
-import auth, { updateProfile, EmailAuthProvider, deleteUser } from "@react-native-firebase/auth";
+import auth, { updateProfile, EmailAuthProvider, deleteUser, updatePassword } from "@react-native-firebase/auth";
 import {Alert} from "react-native";
 import firestore from "@react-native-firebase/firestore";
-import storage from "@react-native-firebase/storage"
+import storage from "@react-native-firebase/storage";
+
+//TODO: sync with offline database
 
 export const AuthContext = createContext();
 
@@ -42,9 +44,8 @@ export const AuthProvider = ({children}) => {
         }
     };
 
-    const reauthenticateUser = async() => {
+    const reauthenticateUser = async(currentPassword) => {
         // get user's credential
-        currentPassword = 'abc123';
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         console.log('Successful get user credential')
 
@@ -102,7 +103,7 @@ export const AuthProvider = ({children}) => {
                         const updatedUser = auth().currentUser;
 
                         // Set user in state
-                        setUser(updatedUser);
+                       await setUser(updatedUser);
 
                         // Save user details to Firestore
                         await saveUserDetailsToFirestore(updatedUser, phone);
@@ -133,13 +134,19 @@ export const AuthProvider = ({children}) => {
                         await updateUserProfile(user, name, photoURL);
 
                         // Reload user to get updated details
-                        await auth.reload(user);
+                        await user.reload();
+                        const updatedUser = auth().currentUser;
+                        console.log(updatedUser);
+
+                        // Set user in state
+                        await setUser(updatedUser);
 
                         // Save user details to firestore
-                        await saveUserDetailsToFirestore(user, phone);
+                        await saveUserDetailsToFirestore(updatedUser, phone);
 
                         Alert.alert('Profile Updated!', 'Your profile has been updated successfully.');
                     }catch (error) {
+                        Alert.alert('Update Error', 'There is an error occurred.');
                         console.error('Error updating Firebase Auth profile: ', error);
                     }finally{
                         setLoading(false);
@@ -160,6 +167,7 @@ export const AuthProvider = ({children}) => {
 
                 resetPassword: async (email) => {
                     try{
+                        setLoading(true);
                         const emailExists = await checkEmailExists(email);
                         if (emailExists) {
                             await auth().sendPasswordResetEmail(email);
@@ -171,7 +179,31 @@ export const AuthProvider = ({children}) => {
                         Alert.alert('Reset Error', 'There was an error sending the password reset link.');
                         console.log(error);
                     }finally{
-                        await auth.reload(user);
+                        await user.reload();
+                        setLoading(false);
+                    }
+                },
+
+                editPassword: async (oldPassword, newPassword) => {
+                    try {
+                        setLoading(true);
+                        await reauthenticateUser(oldPassword);
+                        await updatePassword(user,newPassword);
+                        Alert.alert('Request Success', 'Your password is updated.');
+
+                    } catch (error) {
+                        if (error.code == "auth/invalid-credential") {
+                            Alert.alert('Authentication Failed', 'The password is incorrect.');
+                        } else if (error.code === 'auth/wrong-password') {
+                            Alert.alert('Authentication Failed', 'The password is incorrect.');
+                        } else if (error.code == "auth/network-request-failed") {
+                            Alert.alert("Network Error", "Please check your connection.");
+                        } else {
+                            Alert.alert('Error', 'An unexpected error occurred.');
+                        }
+                    } finally {
+                        await user.reload();
+                        setLoading(false);
                     }
                 },
 
@@ -197,25 +229,36 @@ export const AuthProvider = ({children}) => {
                     }
                 },
 
-                updateEmail: async (newEmail) => {
+                updateEmail: async (password, newEmail) => {
                     try{
-                        reauthenticateUser();
-                        await user.verifyBeforeUpdateEmail(newEmail);
-                        console.log('Verification email sent to new email');
-                        Alert.alert('Request Success', 'Verification email sent. Please verify your new email address.')
+                        setLoading(true);
+                        if (user.email === newEmail) {
+                            Alert.alert("Request failed", "The email is same as the current email");
+                        }else{
+                            await reauthenticateUser(password);
+                            await user.verifyBeforeUpdateEmail(newEmail);
+                            console.log('Verification email sent to new email');
+                            Alert.alert('Request Success', 'Verification email sent. Please verify your new email address and re-login.');
+                            auth().signOut();
+                        }
                     }catch(error){
                         console.log(error);
-                        if (error.code === 'auth/wrong-password') {
-                            Alert.alert('Reauthentication Failed', 'The password is incorrect.');
-                        } else if (error.code === 'auth/invalid-email') {
+                        if (error.code == "auth/invalid-credential") {
+                            Alert.alert('Authentication Failed', 'The password is incorrect.');
+                        } else if (error.code === 'auth/wrong-password') {
+                            Alert.alert('Authentication Failed', 'The password is incorrect.');
+                        } else if (error.code === 'auth/invalid-new') {
                             Alert.alert('Request failed', 'The new email address is not valid.');
                         } else if (error.code === 'auth/operation-not-allowed') {
                             Alert.alert('Request failed', 'This operation is not allowed.');
+                        } else if (error.code == "auth/network-request-failed") {
+                            Alert.alert("Network Error", "Please check your connection.");
                         } else {
                             Alert.alert('Error', 'An unexpected error occurred.');
                         }
                     }finally{
-                        await auth.reload(user)
+                        await user.reload();
+                        setLoading(false);
                     }
                 },
             }}

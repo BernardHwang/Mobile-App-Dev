@@ -11,6 +11,7 @@ import { fetchEventsForSelectedDay } from '../database/firestore-service';
 import { checkInternetConnection } from '../database/sync';
 import { getDBConnection, getEventsByDate } from '../database/db-services';
 import { useFocusEffect } from '@react-navigation/native';
+import { DrawerButton } from '../UI';
 import  ExternalStyleSheet  from '../ExternalStyleSheet';
 
 const HomeScreen = ({ navigation }:any) => {
@@ -36,13 +37,14 @@ const HomeScreen = ({ navigation }:any) => {
         }, (error) => {
           console.log('Error fetching real-time notifications:', error);
         });
-      
+
       return () => unsubscribe(); // Clean up on unmount
     }, [selectedDay, user.uid]) // Re-run this effect when selectedDay or user.uid changes
   );
 
   const fetchEvents = async () => {
     const connected = await checkInternetConnection();
+
     const eventsGet = connected 
     ? await fetchEventsForSelectedDay(selectedDay)
     : await getEventsByDate(await getDBConnection(), new Date(selectedDay));
@@ -96,6 +98,7 @@ const HomeScreen = ({ navigation }:any) => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+        <DrawerButton />
         <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
         <IconBadge
           MainElement={

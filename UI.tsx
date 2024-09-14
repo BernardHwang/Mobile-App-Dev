@@ -1,9 +1,8 @@
-
 import React, {useState} from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableNativeFeedback} from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Image } from 'react-native-reanimated/lib/typescript/Animated';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const InputWithIconLabel = (props: any) => {
     const orientationDirection = (props.orientation == 'horizontal')? 'row' : 'column';
@@ -27,51 +26,52 @@ const InputWithLabel = (props: any) => {
 
     const [hidePassword, setHidePassword] = useState(props.password);
 
-    return(
+    return (
         <View style={{ marginBottom: 20 }}>
             <Text style={inputLabelStyles.label}>{props.label}</Text>
-            <View style={[inputLabelStyles.input, { borderColor: props.error ? "red" : "#ccc" }]}>
+            <View
+                style={[inputLabelStyles.input, {
+                        borderColor: props.error ? 'red' : '#ccc',
+                        backgroundColor: props.editable === false ? '#e0e0e0' : '#fff'
+                    }
+                ]}
+            >
                 <Icon
                     name={props.iconName}
-                    style={{fontSize: 25, color: "#30106B", marginLeft: 10, marginRight: 10}}
+                    style={{ fontSize: 25, color: '#30106B', marginLeft: 10, marginRight: 10 }}
                 />
                 <TextInput
                     autoCorrect={false}
                     secureTextEntry={hidePassword}
-                    style={{color: "black", flex: 1 }}
+                    style={{ flex: 1, fontSize: 16, fontColor: props.editable === false ? '#747474' : 'black' }}
                     {...props}
                 />
                 {props.password && (
                     <Icon
                         onPress={() => setHidePassword(!hidePassword)}
                         name={hidePassword ? 'eye-off-outline' : 'eye-outline'}
-                            style={{ color: "#30106B", fontSize: 25, marginRight: 10 }}
+                        style={{ color: "#30106B", fontSize: 25, marginRight: 10}}
                     />
                 )}
             </View>
-            {props.error && (<Text style={{ color: "red", fontSize: 12, marginTop: 7, marginLeft:10 }}>{props.error}</Text>)}
+            {props.error && (
+                <Text style={{ color: 'red', fontSize: 12, marginTop: 7, marginLeft: 10 }}>
+                    {props.error}
+                </Text>
+            )}
         </View>
     );
 }
 
 const AppButton = (props: any) => {
 
-    let backgroundColorTheme = '';
-
-    if (props.theme) {
-        switch (props.theme) {
-            case 'disable':
-                backgroundColorTheme = "#60717d";
-            default:
-                backgroundColorTheme = "#4B0082";
-        }
-    } else {
-        backgroundColorTheme = "#4B0082";
-    }
+    let backgroundColorTheme = props.disabled ? "#808080" : "#4B0082";
+    let textColor = props.disabled ? '#ddd' : '#fff';
 
     return (
         <TouchableNativeFeedback
             onPress={props.onPress}
+            disabled={props.disabled}
         >
             <View style={[buttonStyles.button, { backgroundColor: backgroundColorTheme }]}>
                 <Text style={buttonStyles.buttonText}>{props.title}</Text>
@@ -79,6 +79,31 @@ const AppButton = (props: any) => {
         </TouchableNativeFeedback>
     )
 }
+
+const ProfileActionButton = (props:any) => {
+    return(
+        <TouchableNativeFeedback onPress={props.onPress}>
+            <View style={[styles.actionButtonContainer, { backgroundColor: props.backgroundColor || '#efecf6' }]}>
+                <Icon
+                    name={props.iconName}
+                    style={[styles.icon, {color:props.color || '#3e2769'}]}
+                    size={30}
+                />
+                <Text style={[styles.actionText, { color: props.color || '#3e2769' }]}>{props.title}</Text>
+            </View>
+        </TouchableNativeFeedback>
+    );
+}
+
+
+const DrawerButton = () => {
+    const navigation = useNavigation();
+    return (
+        <TouchableWithoutFeedback onPress={() => navigation.openDrawer()}>
+            <Icon name="menu" size={30} color="#000" />
+        </TouchableWithoutFeedback>
+    );
+};
 
 const style = StyleSheet.create({
     inputContainer: {
@@ -103,7 +128,7 @@ const style = StyleSheet.create({
     errorIcon: {
         marginLeft: 5,  // Spacing between the input field and the error icon
     },
-    
+
 })
 
 const inputLabelStyles = StyleSheet.create({
@@ -114,8 +139,9 @@ const inputLabelStyles = StyleSheet.create({
     label: {
         marginVertical: 5,
         marginHorizontal: 10,
-        fontSize: 15,
+        fontSize: 16,
         color: 'black',
+        fontWeight: 'bold'
     },
     input: {
         height: 55,
@@ -165,8 +191,31 @@ const headerStyles = StyleSheet.create({
     }
 })
 
+const styles = StyleSheet.create({
+    actionButtonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 20,
+        paddingVertical: 5,
+        paddingHorizontal: 20,
+        marginVertical: 10,
+        marginHorizontal: 15,
+    },
+    icon: {
+        padding: 10,
+        borderRadius: 30,
+        marginRight: 15,
+    },
+    actionText: {
+        fontSize: 18,
+        fontWeight: '500',
+    },
+});
+
 export {
     InputWithIconLabel,
     InputWithLabel,
     AppButton,
+    ProfileActionButton,
+    DrawerButton
 }
