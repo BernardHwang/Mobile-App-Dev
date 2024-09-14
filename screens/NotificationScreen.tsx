@@ -73,11 +73,14 @@ const NotificationScreen = () => {
         <FlatList
           data={notifications}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <Swipeable
               renderRightActions={() => renderRightActions(item.id)}
             >
-              <View style={styles.notificationItem}>
+              <View style={[
+                styles.notificationItem,
+                { backgroundColor: index % 2 === 0 ? '#ededf7' : '#fff' } // Alternate colors for even and odd rows
+              ]}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
                   <Text style={styles.title}>{item.title}</Text>
                   <Text style={{fontSize: 12,}}>{moment(item.timestamp).format('D MMM HH:mm')}</Text>
@@ -89,6 +92,7 @@ const NotificationScreen = () => {
             </Swipeable>
           )}
         />
+
       )}
     </View>
   );
@@ -102,7 +106,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#3e2769'
   },
   text: {
     fontSize: 15,
@@ -116,8 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#fff',
     height: 100,
-    width: Dimensions.get('window').width
-
+    width: Dimensions.get('window').width,
   },
   noNotificationsText: {
     fontSize: 18,
