@@ -9,11 +9,10 @@ import { editEventLocally, getDBConnection } from '../database/db-services';
 import { updateEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
-import { Timestamp } from 'firebase/firestore';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
-    // const { event } = route.params;
+    
     const [eventID, setEventID] = useState<string>(route.params.event_id);
     const [event, setEvent] = useState<any>(null);
     const [eventTitle, setTitle] = useState<string>('');
@@ -29,20 +28,7 @@ const EditEvent = ({navigation, route}: any) => {
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
-    const [isOnline, setIsOnline] = useState<boolean>(true);
     const [errorMessage, setErrorMessage] = useState('');
-
-    const checkConnection = async () => {
-        const connected = await checkInternetConnection();
-        setIsOnline(!!connected);
-        if (!connected) {
-            Alert.alert(
-                'No Internet Connection',
-                'You are offline. You cannot create or update events while offline.',
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
-        }
-    };
 
      // Load event data on mount
      useEffect(() => {
@@ -56,34 +42,27 @@ const EditEvent = ({navigation, route}: any) => {
                     console.log('No event details returned');
                 }
             } catch (error) {
-                console.error("Error loading event: ", error);
+                console.log("Error loading event: ", error);
             }
         };
         loadEvent();
-        checkConnection(); // Check the internet connection
     }, [eventID, navigation]);
 
 
     // Update form fields when the event data is available
     useEffect(() => {
         if (event) {
-            const start = convertTimestampToDate(event.start_date);
-            const end = convertTimestampToDate(event.end_date);
             setTitle(event.name || '');
-            setStartDate(moment(start).startOf('day').toDate());
-            setEndDate(moment(end).startOf('day').toDate());
-            setStartTime(start);
-            setEndTime(end);
+            setStartDate(moment(event.start_date).startOf('day').toDate());
+            setEndDate(moment(event.end_date).startOf('day').toDate());
+            setStartTime(event.start_date);
+            setEndTime(event.end_date);
             setLocation(event.location || '');
             setGuest(event.guest || '');
             setSeat(event.seats || 0);
             setDesc(event.description || '');
         }
     }, [event]);
-
-    const convertTimestampToDate = (timestamp) => {
-        return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    };
 
     const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
@@ -198,8 +177,8 @@ const EditEvent = ({navigation, route}: any) => {
                 const eventData = {
                     event_id: id,
                     name: eventTitle,
-                    start_date: combineDateAndTime(startDate, startTime).toISOString(),
-                    end_date: combineDateAndTime(endDate, endTime).toISOString(),
+                    start_date: combineDateAndTime(startDate, new Date(startTime)).toISOString(),
+                    end_date: combineDateAndTime(endDate, new Date(endTime)).toISOString(),
                     location: location,
                     guest: guest,
                     description: desc,
@@ -220,7 +199,7 @@ const EditEvent = ({navigation, route}: any) => {
                 });
 
             } catch (error) {
-                console.error("Error editing event: ", error);
+                console.log("Error editing event: ", error);
                 Alert.alert('Error', 'An error occurred while updating the event. Please try again.');
             }
         }

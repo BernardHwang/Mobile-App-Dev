@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Modal, Button, Alert } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
@@ -12,6 +12,7 @@ import { checkInternetConnection } from '../database/sync';
 import { getDBConnection, getEventsByDate } from '../database/db-services';
 import { useFocusEffect } from '@react-navigation/native';
 import { DrawerButton } from '../UI';
+import  ExternalStyleSheet  from '../ExternalStyleSheet';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -21,27 +22,11 @@ const HomeScreen = ({ navigation }:any) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
-  // useEffect(() => {
-  //   fetchEvents();
-
-  //   const unsubscribe = firestore()
-  //     .collection('users')
-  //     .doc(user.uid)
-  //     .collection('notifications')
-  //     .onSnapshot((snapshot) => {
-  //       setNotificationCount(snapshot.size);
-  //     }, (error) => {
-  //       console.error('Error fetching real-time notifications:', error);
-  //     });
-
-  //   return () => unsubscribe();
-  // }, [navigation, selectedDay, user.uid]);
-
   useFocusEffect(
     useCallback(() => {
       // Fetch events every time the screen comes into focus
       fetchEvents();
-
+      
       // Fetch notification count in real-time
       const unsubscribe = firestore()
         .collection('users')
@@ -50,7 +35,7 @@ const HomeScreen = ({ navigation }:any) => {
         .onSnapshot((snapshot) => {
           setNotificationCount(snapshot.size);
         }, (error) => {
-          console.error('Error fetching real-time notifications:', error);
+          console.log('Error fetching real-time notifications:', error);
         });
 
       return () => unsubscribe(); // Clean up on unmount
@@ -59,11 +44,12 @@ const HomeScreen = ({ navigation }:any) => {
 
   const fetchEvents = async () => {
     const connected = await checkInternetConnection();
-    const events = connected
+
+    const eventsGet = connected 
     ? await fetchEventsForSelectedDay(selectedDay)
     : await getEventsByDate(await getDBConnection(), new Date(selectedDay));
-
-    setEvents(events);
+    
+    setEvents(eventsGet);
   };
 
   const selectDay = () => {
@@ -72,22 +58,22 @@ const HomeScreen = ({ navigation }:any) => {
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.eventCard}
+      style={ExternalStyleSheet.eventCard}
       onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEvents })}
     >
       {item.image ? (
         <Image
           source={{ uri: item.image }}
-          style={styles.eventImage}
+          style={ExternalStyleSheet.eventImage}
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.noImagePlaceholder}>
+        <View style={ExternalStyleSheet.noImagePlaceholder}>
           <Text>No Image</Text>
         </View>
       )}
-      <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{item.start_time}</Text>
+      <Text style={ExternalStyleSheet.eventTitle}>{item.name}</Text>
+      <Text style={ExternalStyleSheet.eventTime}>{item.start_time}</Text>
     </TouchableOpacity>
   );
 
@@ -95,6 +81,19 @@ const HomeScreen = ({ navigation }:any) => {
     setSelectedDay(date.dateString);
     setModalVisible(false);
   };
+
+  const handleCreatePress = async() => {
+    const connected = await checkInternetConnection();
+        if (connected) {
+            navigation.navigate('AddEvent',{userID: user.uid});
+        } else {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. You cannot create events while offline.',
+                [{ text: 'OK'}]
+            );
+        }
+  }
 
   return (
     <View style={styles.container}>
@@ -123,7 +122,7 @@ const HomeScreen = ({ navigation }:any) => {
       <TouchableOpacity onPress={selectDay}>
         <View style={{flexDirection:'row', justifyContent:'flex-start', alignItems:'baseline'}}>
           <Text style={styles.dayFont}>{moment(selectedDay).format('Do')} </Text>
-          <Text style={{fontSize: 25}}>{moment(selectedDay).format('MMM')}/{moment(selectedDay).format('YYYY')} ({moment(selectedDay).format('ddd')})</Text>
+          <Text style={{fontSize: 25, color: '#26294D'}}>{moment(selectedDay).format('MMM')}/{moment(selectedDay).format('YYYY')} ({moment(selectedDay).format('ddd')})</Text>
         </View>
       </TouchableOpacity>
 
@@ -149,10 +148,11 @@ const HomeScreen = ({ navigation }:any) => {
               theme={{
                 calendarBackground: '#f0f0f0', // Background color for the calendar
                 todayTextColor: '#26294D', // Color for today's date
+                arrowColor: '#26294D',
               }}
               style={{marginBottom: 20,borderRadius: 15}}
             />
-            <Button title="Close" onPress={() => setModalVisible(false)} />
+            <Button title="Close" onPress={() => setModalVisible(false)} color={'#26294D'}/>
           </View>
         </View>
       </Modal>
@@ -174,9 +174,7 @@ const HomeScreen = ({ navigation }:any) => {
         ]}
         buttonSize={50}
         color='#3e2769'
-        onPressItem={() =>
-          navigation.navigate('AddEvent',{userID: user.uid})
-        }
+        onPressItem={handleCreatePress}
         overrideWithAction={true}
       />
     </View>
@@ -187,40 +185,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#e6e6fa',
   },
   dayFont:{
-    fontSize: 45,
+    fontSize: 40,
     fontWeight:'bold',
-  },
-  eventCard: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 8,
-  },
-  eventImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  noImagePlaceholder: {
-    width: '100%',
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#e0e0e0',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  eventTime: {
-    fontSize: 14,
-    color: '#888',
+    color: '#330c94'
   },
   noEventsText: {
     textAlign: 'center',
@@ -230,8 +200,9 @@ const styles = StyleSheet.create({
   },
   eventsHeader: {
     fontWeight: 'bold',
-    fontSize: 25,
+    fontSize: 24,
     paddingTop: 15,
+    color: '#26294D'
   },
   modalContainer: {
     flex: 1,

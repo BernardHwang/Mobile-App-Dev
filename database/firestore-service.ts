@@ -13,10 +13,22 @@ export const getEvents = async (event_id: string): Promise<any> => {
       return null; // Return null if the document doesn't exist
     }
 
+    const data = eventDoc.data();
+
+      // Convert Firestore Timestamps to JavaScript Dates
+      if (data.start_date && data.start_date.toDate) {
+          data.start_date = data.start_date.toDate().toISOString(); // Convert to JavaScript Date
+      }
+      if (data.end_date && data.end_date.toDate) {
+          data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
+      }
+      if (data.seats){
+        data.seats = parseInt(data.seats, 10);;
+      }
     // Return the event data, including the document ID
     return {
       id: eventDoc.id,  // Firestore document ID
-      ...eventDoc.data() // Spread the event data fields
+      ...data // Spread the event data fields
     };
     
   } catch (error) {
@@ -38,7 +50,19 @@ export const getHostEventsByUserIDOnline = async (user_id: string): Promise<any[
 
         const eventsData: any[] = [];
         snapshot.forEach(doc => {
-            eventsData.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+
+            // Convert Firestore Timestamps to JavaScript Dates
+            if (data.start_date && data.start_date.toDate) {
+                data.start_date = data.start_date.toDate().toISOString(); // Convert to JavaScript Date
+            }
+            if (data.end_date && data.end_date.toDate) {
+                data.end_date = data.end_date.toDate().toISOString(); // Convert to JavaScript Date
+            }
+            if (data.seats){
+                data.seats = parseInt(data.seats, 10);;
+            }
+            eventsData.push({ event_id: doc.id, ...data });
         });
         
         return eventsData;
@@ -62,7 +86,16 @@ export const getJoinEventsByUserIDOnline = async (user_id: string): Promise<any[
           
           if (!participantsSnapshot.empty) {
             const eventData = doc.data();
-            joinedEvents.push({ id: doc.id, ...eventData });
+            if (eventData.start_date && eventData.start_date.toDate) {
+                eventData.start_date = eventData.start_date.toDate().toISOString(); // Convert to JavaScript Date
+            }
+            if (eventData.end_date && eventData.end_date.toDate) {
+                eventData.end_date = eventData.end_date.toDate().toISOString(); // Convert to JavaScript Date
+            }
+            if (eventData.seats){
+              eventData.seats = parseInt(eventData.seats, 10);;
+            }
+            joinedEvents.push({ event_id: doc.id, ...eventData });
           }
       }
 
@@ -233,5 +266,32 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     return fetchedEvents;
   } catch (error) {
     console.error('Error fetching events:', error);
+  }
+};
+
+export const getEventNotificationStatus = async (event_id: string, user_id: string) => {
+  const participantDoc = await firestore().collection('events').doc(event_id).collection('eventParticipant').doc(user_id).get();
+  const notificationStatus = participantDoc.data()?.notification_status;
+  
+  return notificationStatus;
+}
+
+export const changeEventNotificationStatus = async (event_id: string, user_id: string) => {
+  const eventsParticipantsRef = firestore().collection('events').doc(event_id).collection('eventParticipant').doc(user_id);
+
+  // Get the current notification status
+  const participantDoc = await eventsParticipantsRef.get();
+
+  if (participantDoc.exists) {
+    const notificationStatus = participantDoc.data()?.notification_status;
+
+    // Toggle the notification status
+    await eventsParticipantsRef.update({
+      notification_status: !notificationStatus,
+    });
+
+    console.log(`Notification status changed to ${!notificationStatus}`);
+  } else {
+    console.error('Participant not found');
   }
 };

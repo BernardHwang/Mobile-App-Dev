@@ -5,8 +5,10 @@ import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { getDBConnection, getHostEventsByUserIDOffline, getJoinEventsByUserIDOffline } from '../database/db-services';
 import { getHostEventsByUserIDOnline, getJoinEventsByUserIDOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
+import Ionicons from 'react-native-vector-icons/Ionicons'; 
 import TabButtons, { TabButtonType } from './MyEventScreenButtons';
 import { _sync, checkInternetConnection } from '../database/sync';
+import  ExternalStyleSheet  from '../ExternalStyleSheet';
 import moment from 'moment';
 
 export enum CustomTab {
@@ -65,30 +67,46 @@ const MyEventScreen = ({ navigation }:any) => {
     }
   };
 
-  const convertTimestampToDate = (timestamp) => {
-    return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-  };
-
-  const renderEventItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.eventCard}
-      onPress={()=>navigation.navigate('EventDetails', { event_id: item.id, refresh: fetchEventsForHost})}
+  const renderEventItem = ({ item }) => {
+    const isEventActive = moment().isBefore(item.end_date);
+    return(
+      <TouchableOpacity
+      style={ExternalStyleSheet.eventCard}
+      onPress={()=>navigation.navigate('EventDetails', { event_id: item.event_id, refresh: fetchEventsForHost})}
     >
       {item.image ? (
         <Image
           source={{ uri: item.image }}
-          style={styles.eventImage}
+          style={ExternalStyleSheet.eventImage}
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.noImagePlaceholder}>
+        <View style={ExternalStyleSheet.noImagePlaceholder}>
           <Text>No Image</Text>
         </View>
       )}
-      <Text style={styles.eventTitle}>{item.name}</Text>
-      <Text style={styles.eventTime}>{moment(convertTimestampToDate(item.start_date)).format('MMMM Do YYYY, h:mm A')}</Text> 
+      <View style={styles.eventInfo}>
+        <View style={styles.eventTextContainer}>
+          <Text style={ExternalStyleSheet.eventTitle}>{item.name}</Text>
+          <Text style={ExternalStyleSheet.eventTime}>
+            {moment(item.start_date).format('MMMM Do YYYY, h:mm A')}
+          </Text>
+        </View>
+        <View style={styles.statusContainer}>
+          <Ionicons
+            name="ellipse"
+            size={12}
+            color={isEventActive ? 'green' : 'grey'} // Green for active, red for inactive
+            style={styles.statusIcon}
+          />
+          <Text style={[styles.statusText, { color: isEventActive ? 'green' : 'grey' }]}>
+            {isEventActive ? 'Active' : 'Inactive'}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   useEffect(() => {
     if (selectedTab === CustomTab.Tab1) {
@@ -104,6 +122,8 @@ const MyEventScreen = ({ navigation }:any) => {
     const unsubscribe = navigation.addListener('focus', async () => {
       if (selectedTab === CustomTab.Tab2) {
         await fetchEventsForHost();  // Ensure hosted events are refreshed on focus
+      } else if (selectedTab === CustomTab.Tab1){
+        await fetchEventsForJoin();
       }
     });
   
@@ -126,21 +146,21 @@ const MyEventScreen = ({ navigation }:any) => {
         onPageSelected={onPageSelected}
       >
         <View key="1" style={styles.page}>
-          <Text style={styles.eventsHeader}>Joined Events</Text>
+          <Text style={ExternalStyleSheet.eventsHeader}>Joined Events</Text>
           <FlatList
             data={joinedEvents}
             renderItem={renderEventItem}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.noEventsText}>No events joined.</Text>}
+            ListEmptyComponent={<Text style={ExternalStyleSheet.noEventsText}>No events joined.</Text>}
           />
         </View>
         <View key="2" style={styles.page}>
-          <Text style={styles.eventsHeader}>Hosted Events</Text>
+          <Text style={ExternalStyleSheet.eventsHeader}>Hosted Events</Text>
           <FlatList
             data={hostedEvents}
             renderItem={renderEventItem}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.noEventsText}>No events hosted.</Text>}
+            ListEmptyComponent={<Text style={ExternalStyleSheet.noEventsText}>No events hosted.</Text>}
           />
         </View>
       </PagerView>
@@ -151,47 +171,27 @@ const MyEventScreen = ({ navigation }:any) => {
   const styles = StyleSheet.create({
     page: {
       flex: 1,
+      backgroundColor: '#e6e6fa'
     },
-    eventCard: {
-      backgroundColor: '#f8f8f8',
-      borderRadius: 8,
-      padding: 10,
-      marginVertical: 8,
-    },
-    eventImage: {
-      width: '100%',
-      height: 200,
-      borderRadius: 8,
-      marginBottom: 10,
-    },
-    noImagePlaceholder: {
-      width: '100%',
-      height: 200,
-      justifyContent: 'center',
+    eventInfo: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      backgroundColor: '#e0e0e0',
-      borderRadius: 8,
-      marginBottom: 10,
+      marginTop: 10,
     },
-    eventTitle: {
-      fontSize: 16,
-      fontWeight: 'bold',
+    eventTextContainer: {
+      flex: 1,
     },
-    eventTime: {
-      fontSize: 14,
-      color: '#888',
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
-    eventsHeader: {
-      fontWeight: 'bold',
-      paddingLeft: 15,
-      fontSize: 25,
-      paddingTop: 15,
+    statusIcon: {
+      marginRight: 5,
     },
-    noEventsText: {
-      textAlign: 'center',
-      marginTop: 20,
-      fontSize: 16,
-      color: '#888',
+    statusText: {
+      fontSize: 12,
+      fontWeight: '500',
     },
   });
 

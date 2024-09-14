@@ -5,27 +5,34 @@ import { Avatar } from 'react-native-elements';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { cancelEventLocally, getDBConnection, getEventsByEventID, getEventsParticipantsByEventIDOffline, getParticipantsByEventIDOffline } from '../database/db-services';
-import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent } from '../database/firestore-service';
+import { cancelEventOnline, getEvents, getEventsParticipantsByEventID, getParticipantsByEventID, joinEvent, unjoinEvent, getEventNotificationStatus, changeEventNotificationStatus } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
 import { SocketContext } from '../navigation/SocketProvider';
+import MapView, { Marker } from 'react-native-maps';
+import axios from 'axios';
+import OpenMap from 'react-native-open-maps';
 
 const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
 const MIN_IMG_HEIGHT = 100; // minimum height of the image after scroll
 
 const EventDetails = ({ route, navigation }: any) => {
-    // const { event } = route.params;
+    
     const { user } = useContext(AuthContext);
     const { socket } = useContext(SocketContext);
+
     const [participantsCount, setParticipantsCount] = useState(0);
     const [cancel, setCancel] = useState<boolean>(false);
     const [join, setJoin] = useState<boolean>(false);
     const [joinedUsers, setJoinedUsers] = useState<any[]>([]);
     const [showSplitButtons, setShowSplitButtons] = useState<boolean>(false);
-    const [event, setEvent] = useState<any>(null); //get event by id (to be passed to event details)
+    const [event, setEvent] = useState<any>(null); 
     const [eventID, setEventID] = useState(route.params.event_id);
-    const [isBellOff, setIsBellOff] = useState(true);
+    const [coordinates, setCoordinates] = useState({ latitude: 0, longitude: 0 });
+    const [loading, setLoading] = useState(true);
+    const [isBellOff, setIsBellOff] = useState(false);
+    const [isEventEnded, setIsEventEnded] = useState<boolean>(false);
     
     // Fetch participants on mount and check if the user is already a participant
     const checkIfJoined = async () => {
@@ -49,48 +56,78 @@ const EventDetails = ({ route, navigation }: any) => {
           setParticipantsCount(participants.length);
           setShowSplitButtons(isParticipant);
         } catch (error) {
-          console.error("Error fetching participants: ", error);
+          console.log("Error fetching participants: ", error);
         }
       };
-      
-
-    // useEffect(() => {
-    //     const fetchEventData = async () => {
-    //         try {
-    //             // Fetch the event data
-    //             const theEvent = await getEventByID(eventID);
-    //             // Set the event state
-    //             setEvent(theEvent);
-    //         } catch (error) {
-    //             console.error("Error fetching event data:", error);
-    //         }
-    //     };
-    
-    //     fetchEventData();
-    //     checkIfJoined();
-    // }, [eventID]); 
 
     const fetchEventData = async () => {
         try {
             const theEvent = await getEventByID(eventID);
             if (theEvent){
                 setEvent(theEvent);
-                console.log('Updated Event Data: ', event);
-                return theEvent; 
+                const currentTime = moment(); // Get current time
+                const eventEndTime = moment(theEvent.end_date);
+                setIsEventEnded(eventEndTime.isBefore(currentTime));
+                return theEvent;
             }
         } catch (error) {
-            console.error("Error fetching event data:", error);
+            console.log("Error fetching event data:", error);
         }
     };    
+
+    const handleEditPress = async () => {
+        const connected = await checkInternetConnection();
+        if (connected) {
+            navigation.navigate('EditEvent', {
+                event_id: eventID, 
+                refresh: fetchEventData
+            });
+        } else {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. You cannot create or update events while offline.',
+                [{ text: 'OK'}]
+            );
+        }
+    };
 
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => {
             fetchEventData();
             checkIfJoined();
         });
+
+        fetchEventNotificationStatus();
     
         return unsubscribe;
     }, [navigation, eventID]);
+    
+    useEffect(() => {
+        // Function to fetch coordinates based on the location string
+        const fetchCoordinates = async () => {
+            if (!event || !event.location) return;
+            try {
+                const response = await axios.get(
+                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(event.location)}&key=${'AIzaSyDfYC_0IwQ1K2Ua07Ix1vYMaSP-eafAmbw'}`
+                );
+                const locationData = response.data.results[0].geometry.location;
+                setCoordinates({
+                    latitude: locationData.lat,
+                    longitude: locationData.lng,
+                });
+                setLoading(false);
+            } catch (error) {
+                console.log('Error fetching location data:', error);
+            }
+        };
+
+        fetchCoordinates();
+    }, [event]);
+
+    const fetchEventNotificationStatus = async () => {
+        const notificationStatus = await getEventNotificationStatus(eventID, user.uid)
+        setIsBellOff(notificationStatus);
+    }
 
     const scrollY = useRef(new Animated.Value(0)).current;
     const imgHeight = scrollY.interpolate({
@@ -121,15 +158,25 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const cancelEvent = async (id: string) => {
         try{
-            const db = await getDBConnection();
-            await cancelEventOnline(id);
-            await cancelEventLocally(db, id);
-            await _sync();
-            setCancel(false);
-            route.params.refresh();
-            navigation.goBack();
+            const connected = await checkInternetConnection();
+            if (connected){
+                const db = await getDBConnection();
+                await cancelEventOnline(id);
+                await cancelEventLocally(db, id);
+                await _sync();
+                setCancel(false);
+                route.params.refresh();
+                navigation.goBack();
+            }
+            else{
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to cancel event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
+            }
         } catch(error) {
-            console.error("Error canceling event: ", error);
+            console.log("Error canceling event: ", error);
             Alert.alert('Error', 'An error occurred while cancelling event. Please try again.');
         }
         
@@ -137,32 +184,71 @@ const EventDetails = ({ route, navigation }: any) => {
 
     const joinEventFunction = async (participant_id: string, event_id: string) => {
         try{
-            await joinEvent(participant_id, event_id);
-            await _sync();
-            setJoin(!join);
-            checkIfJoined();
-            socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
+            const connected = await checkInternetConnection();
+            if (connected){
+                await joinEvent(participant_id, event_id);
+                await _sync();
+                setJoin(!join);
+                checkIfJoined();
+                setIsBellOff(false);
+                setShowSplitButtons(true);
+                socket.emit('joinEvent', {eventId: event_id, userId: user.uid})
+            }
+            else {
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to join event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
+            }
         }catch(error){
-            console.error("Error joining event: ", error);
+            console.log("Error joining event: ", error);
             Alert.alert('Error', 'An error occurred while joining event. Please try again.');
         }
     }
 
     const unjoinEventFunction = async (participant_id: string, event_id: string) => {
         try{
-            await unjoinEvent(participant_id, event_id);
-            await _sync();
-            setJoin(!join);
-            checkIfJoined();
-            socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
+            const connected = await checkInternetConnection();
+            if (connected){
+                await unjoinEvent(participant_id, event_id);
+                await _sync();
+                setJoin(!join);
+                checkIfJoined();
+                setShowSplitButtons(false);
+                socket.emit('unjoinEvent', {eventId: event_id, userId: user.uid})
+            }
+            else{
+                Alert.alert(
+                    'No Internet Connection',
+                    'Failed to unjoin event! Please connect to internet.',
+                    [{ text: 'OK'}]
+                );
+            }
         }catch(error){
-            console.error("Error unjoining event: ", error);
+            console.log("Error unjoining event: ", error);
             Alert.alert('Error', 'An error occurred while unjoining event. Please try again.');
         }
     }
 
-    const convertTimestampToDate = (timestamp) => {
-        return new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    const changeNotificationStatus = async () => {
+        await changeEventNotificationStatus(eventID, user.uid);
+        socket.emit('eventNotificationStatus', {eventId: eventID, userId: user.uid})
+    }
+
+    const handleBellPress = async () => {
+        const connected = await checkInternetConnection();
+        if (connected) {
+            setShowSplitButtons(true);
+            setIsBellOff(!isBellOff);
+            changeNotificationStatus();
+        } else {
+            Alert.alert(
+                'No Internet Connection',
+                'You are offline. Please connect to internet.',
+                [{ text: 'OK'}]
+            );
+        }
     };
 
     return (
@@ -228,15 +314,15 @@ const EventDetails = ({ route, navigation }: any) => {
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>Start</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.start_date)).format('h:mm A')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.start_date).format('h:mm A')}</Text>
                             </View>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
                             <View style={styles.timeWrapper}>
                                 <Text style={styles.timeHeader}>End</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('Do MMM')}</Text>
-                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(convertTimestampToDate(event.end_date)).format('h:mm A')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('Do MMM')}</Text>
+                                <Text style={{ fontSize: 20, color: '#3e2769', fontWeight: '500', }}>{moment(event.end_date).format('h:mm A')}</Text>
                             </View>
                         </View>
                     </View>
@@ -246,6 +332,32 @@ const EventDetails = ({ route, navigation }: any) => {
                 <Text style={styles.description}>
                     {event.description}
                 </Text>
+
+                <View style={styles.mapContainer}>
+                    {!loading ? (
+                        <MapView
+                            style={{ width: '100%', height: 300 }}
+                            initialRegion={{
+                                latitude: coordinates.latitude,
+                                longitude: coordinates.longitude,
+                                latitudeDelta: 0.01,
+                                longitudeDelta: 0.01,
+                            }}
+                            onPress={() => OpenMap({
+                                latitude: coordinates.latitude,
+                                longitude: coordinates.longitude
+                            })}
+                        >
+                            <Marker
+                                coordinate={coordinates}
+                                title={event.name}
+                                description={event.location}
+                            />
+                        </MapView>
+                    ) : (
+                        <Text>Loading map...</Text>
+                    )}
+                </View>
                 </>
                 ):(
                     <Text>Loading event details...</Text>
@@ -258,7 +370,7 @@ const EventDetails = ({ route, navigation }: any) => {
             
             <View style={styles.detailFooter}>
                 <TouchableOpacity onPress={() => {setCancel(true)}} style={styles.footerBtn} >
-                    <Text style={styles.footerBtnTxt}>Cancel Event</Text>
+                    <Text style={styles.footerBtnTxt}>{isEventEnded ? "Delete Event" : "Cancel Event"}</Text>
                 </TouchableOpacity>
             </View>
             
@@ -267,17 +379,31 @@ const EventDetails = ({ route, navigation }: any) => {
             <View style={styles.detailFooter}>
                 {showSplitButtons ? (
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);setIsBellOff(!isBellOff)}} style={styles.remindBtn}>
-                        <MaterialCommunityIcons name={isBellOff ? "bell-off-outline":"bell-ring-outline"} size={23} color='#3e2769'/>
+                    <TouchableOpacity onPress={handleBellPress} style={styles.remindBtn}>
+                        <MaterialCommunityIcons name={isBellOff ? "bell-ring-outline":"bell-off-outline"} size={23} color='#3e2769'/>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);setShowSplitButtons(false)}} style={styles.unjoinButton}>
+                    <TouchableOpacity onPress={()=>{unjoinEventFunction(user.uid, event.id);}} style={styles.unjoinButton}>
                         <Text style={styles.footerBtnTxt}>Unjoin Event</Text>
                     </TouchableOpacity>
                 </View>
                 ) : (
-                    <TouchableOpacity onPress={() => {setShowSplitButtons(true);joinEventFunction(user.uid, event.id)}} style={styles.footerBtn}>
+                    event && (
+                    <TouchableOpacity onPress={() => {
+                        if (event.seats - participantsCount > 0) {
+                            joinEventFunction(user.uid, event.id);
+                        }
+                    }}
+                    style={[
+                        styles.footerBtn, 
+                        { 
+                            backgroundColor: event.seats - participantsCount === 0 ? 'grey' : '#3e2769',
+                            opacity: event.seats - participantsCount === 0 ? 0.7 : 1, // Optional: dim the button
+                        }
+                    ]}
+                    disabled={event.seats - participantsCount === 0} >
                         <Text style={styles.footerBtnTxt}>{join ? "Unjoin" : "Join"}</Text>
                     </TouchableOpacity>
+                    )
                 )}
             </View>
             }
@@ -312,10 +438,7 @@ const EventDetails = ({ route, navigation }: any) => {
             { /* Edit Button */}
             {event && event.host_id == user.uid?
            <TouchableOpacity
-                onPress={()=> navigation.navigate('EditEvent', {
-                    event_id: eventID, 
-                    refresh: fetchEventData
-                })}
+                onPress={handleEditPress}
                 style={styles.headerRightContainer}
            >
                 <View style={styles.headerIconContainer}>
@@ -505,5 +628,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 2, // Ensure it appears above other content
-        }
+    },
+    mapContainer: {
+        marginTop: 40
+    },
+    maps: {
+        width: '100%',
+        height: 300,
+        borderRadius: 10,
+    }
 });

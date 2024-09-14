@@ -28,7 +28,6 @@ const AddEvent = ({navigation}: any) => {
     const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
     const [isStartDatePicker, setIsStartDatePicker] = useState<boolean>(true);
     const [isStartTimePicker, setIsStartTimePicker] = useState<boolean>(true);
-    const [isOnline, setIsOnline] = useState<boolean>(true);
     const [errorMessage, setErrorMessage] = useState('');
     const defaultImages = [
         {uri: require('../images/eventImg1.jpg'), url: 'https://firebasestorage.googleapis.com/v0/b/ezpz-mobile-app-y2s3.appspot.com/o/eventImg1.jpg?alt=media&token=aceff1a6-76a6-4b62-abde-f2028dd51066'},
@@ -37,22 +36,6 @@ const AddEvent = ({navigation}: any) => {
     ];
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
-
-    const checkConnection = async () => {
-        const connected = await checkInternetConnection();
-        setIsOnline(!!connected);
-        if (!connected) {
-            Alert.alert(
-                'No Internet Connection',
-                'You are offline. You cannot create or update events while offline.',
-                [{ text: 'OK', onPress: () => navigation.goBack() }]
-            );
-        }
-    };
-
-    useEffect(()=>{
-        checkConnection();
-    },[navigation])
 
     const handleChoosePhoto = () => {
         launchImageLibrary(
@@ -139,7 +122,7 @@ const AddEvent = ({navigation}: any) => {
     
             return newId;
         } catch (error) {
-            console.error("Transaction failed: ", error);
+            console.log("Transaction failed: ", error);
             throw error;
         }
     };
@@ -189,7 +172,7 @@ const AddEvent = ({navigation}: any) => {
             
         }
 
-        // Check location
+        // Validate location
         if (!location.trim()) {
             Alert.alert('Validation Error', 'Please enter a location.');
             return false;
@@ -250,7 +233,7 @@ const AddEvent = ({navigation}: any) => {
                     routes: [{ name: 'My Event' }],
                 });
             } catch (error) {
-                console.error('Error creating event:', error);
+                console.log('Error creating event:', error);
                 Alert.alert('Error', 'An error occurred while creating the event. Please try again.');
             }
         }

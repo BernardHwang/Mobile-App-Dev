@@ -10,11 +10,10 @@ const NotificationListener = () => {
   useEffect(() => {
     console.log('Receiving message from SocketIo server')
 
-    // Listen for event notifications from the server
-    socket.on('eventNotification', async ({ notification, userId }) => {
+    const handleNotification = async ({ notification, userId }) => {
       try {
         if (userId === user.uid) {
-          const userNotificationsRef = await firestore().collection('users').doc(userId).collection('notifications');
+          const userNotificationsRef = firestore().collection('users').doc(userId).collection('notifications');
           await userNotificationsRef.doc().set({
             title: notification.title,
             message: notification.message,
@@ -24,22 +23,13 @@ const NotificationListener = () => {
       } catch (error) {
         console.error("Error saving notification:", error);
       }
-    });
+    };
 
-    socket.on('participationNotification', async ({ notification, userId }) => {
-        try {
-          if (userId === user.uid) {
-            const userNotificationsRef = await firestore().collection('users').doc(userId).collection('notifications');
-            await userNotificationsRef.doc().set({
-              title: notification.title,
-              message: notification.message,
-              timestamp: firestore.FieldValue.serverTimestamp(),
-            });
-          }
-        } catch (error) {
-          console.error("Error saving notification:", error);
-        }
-      });
+    // Listen for event notifications from the server
+    socket.on('eventNotification', handleNotification);
+    socket.on('participationNotification', handleNotification);
+    socket.on('eventNotificationStatus', handleNotification);
+
 
     // Clean up the socket listener when the component unmounts
     return () => {
