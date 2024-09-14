@@ -239,6 +239,8 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     const eventsRef = firestore().collection('events');
     const querySnapshot = await eventsRef.get();
 
+    const currentDateTime = moment();
+    
     const fetchedEvents = querySnapshot.docs
       .map((doc) => {
         const data = doc.data();
@@ -260,8 +262,16 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
           host_id: data.host_id
         };
       })
-      .filter((event) => moment(event.start_date).isSameOrBefore(day, 'day') && moment(event.end_date).isSameOrAfter(day, 'day')) // Filter by date range
-      .sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
+      .filter((event) => {
+        const eventStartDate = moment(event.start_date);
+        const eventEndDate = moment(event.end_date);
+
+        // Ensure event is on the selected day and not out of time
+        const isEventToday = eventStartDate.isSameOrBefore(day, 'day') && eventEndDate.isSameOrAfter(day, 'day');
+        const isEventInFuture = eventEndDate.isAfter(currentDateTime); // Event hasn't ended yet
+
+        return isEventToday && isEventInFuture;
+      }).sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
 
     return fetchedEvents;
   } catch (error) {
