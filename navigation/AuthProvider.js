@@ -1,5 +1,5 @@
 import React, {createContext, useState, useEffect} from 'react';
-import auth, { updateProfile, EmailAuthProvider, deleteUser, updatePassword } from "@react-native-firebase/auth";
+import auth, { updateProfile, EmailAuthProvider, deleteUser, updatePassword, updateEmail } from "@react-native-firebase/auth";
 import {Alert} from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import storage from "@react-native-firebase/storage";
@@ -12,7 +12,20 @@ export const AuthProvider = ({children}) => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const unsubscribe = auth().onAuthStateChanged(setUser);
+        const unsubscribe = auth().onAuthStateChanged(async (authUser) => {
+            if (authUser) {
+                setUser(authUser);
+                console.log('Auth User:', authUser);
+                const userDoc = await firestore().collection('users').doc(authUser.uid).get();
+                const firestoreUser = userDoc.data();
+
+                // Compare emails
+                if (firestoreUser && firestoreUser.email !== authUser.email) {
+                    console.log('Emails do not match. Updating Firestore...');
+                    await saveUserDetailsToFirestore(authUser, firestoreUser.phone);
+                }
+            }
+        });
         return () => unsubscribe();
     }, []);
 
@@ -70,7 +83,7 @@ export const AuthProvider = ({children}) => {
             await deleteSubcollection(`users/${userID}/notifications`);
             docRef.delete();
             console.log('User data is deleted in Firestore');
-            
+
             await deleteUserJoinEvent(userID);
         }catch(error){
             console.log('Error deleting user in Firestore: ', error);
@@ -81,7 +94,7 @@ export const AuthProvider = ({children}) => {
         try{
             const joinedEvents = await getJoinEventsByUserIDOnline(userID);
             const batch = firestore().batch();
-        
+
             joinedEvents.forEach(doc => {
                 const eventRef = firestore().collection('events').doc(doc.event_id).collection('eventParticipant').doc(userID);
                 batch.delete(eventRef);
@@ -286,7 +299,7 @@ export const AuthProvider = ({children}) => {
                             await reauthenticateUser(password);
                             await user.verifyBeforeUpdateEmail(newEmail);
                             console.log('Verification email sent to new email');
-                            Alert.alert('Request Success', 'Verification email sent. Please verify your new email address and re-login.');
+                            Alert.alert('Request Success', 'Verification email sent. Please verify your new email address.');
                             auth().signOut();
                         }
                     }catch(error){
@@ -305,7 +318,6 @@ export const AuthProvider = ({children}) => {
                             Alert.alert('Error', 'An unexpected error occurred.');
                         }
                     }finally{
-                        await user.reload();
                         setLoading(false);
                     }
                 },
