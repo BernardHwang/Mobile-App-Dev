@@ -13,7 +13,7 @@ import NotificationScreen from '../screens/NotificationScreen.tsx';
 import EventDetails from '../screens/EventDetails.tsx';
 import EditEvent from '../screens/EditEvent.tsx';
 import EditProfileScreen from '../screens/EditProfileScreen.tsx';
-import { EditEmailScreen, EditPasswordScreen } from '../screens/EditCredentialScreen';
+import { EditEmailScreen, EditPasswordScreen, DeleteAccountScreen } from '../screens/EditCredentialScreen';
 import { AuthContext } from '../navigation/AuthProvider.js';
 
 const Stack = createStackNavigator();
@@ -160,6 +160,10 @@ const ProfileStackNav = () => {
             <Stack.Screen
                 name="Edit Password"
                 component={EditPasswordScreen}
+            />
+            <Stack.Screen
+                name="Delete Account"
+                component={DeleteAccountScreen}
             />
         </Stack.Navigator>
     );

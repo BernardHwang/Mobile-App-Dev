@@ -125,7 +125,7 @@ const EditProfileScreen = ({ navigation }: any) => {
     };
 
     const handleUpdate = async () => {
-        let imgUrl = userData.pfp;
+        let imgUrl = userData?.pfp;
         if (imgUrl !== image){
             imgUrl = await uploadImageToStorage(image);
         }
@@ -181,7 +181,7 @@ const EditProfileScreen = ({ navigation }: any) => {
                 <AppButton
                  title="Update"
                  onPress={handleUpdate}
-                 disabled={Boolean(nameErr || phoneErr) || loading} 
+                 disabled={Boolean(nameErr || phoneErr) || loading}
                  btnStyle= {{marginBottom: 50}}/>
             </View>
 
