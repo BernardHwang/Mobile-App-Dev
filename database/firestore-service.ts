@@ -240,7 +240,7 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
     const querySnapshot = await eventsRef.get();
 
     const currentDateTime = moment();
-    
+
     const fetchedEvents = querySnapshot.docs
       .map((doc) => {
         const data = doc.data();
@@ -272,7 +272,6 @@ export const unjoinEvent = async(participant_id: string, event_id: string) => {
 
         return isEventToday && isEventInFuture;
       }).sort((a, b) => moment(a.start_time, 'HH:mm').diff(moment(b.start_time, 'HH:mm')));
-
     return fetchedEvents;
   } catch (error) {
     console.error('Error fetching events:', error);
