@@ -1,7 +1,7 @@
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DatePicker from 'react-native-date-picker';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -12,6 +12,7 @@ import { createEventLocally, getDBConnection } from '../database/db-services';
 import { createEventOnline } from '../database/firestore-service';
 import { AuthContext } from '../navigation/AuthProvider';
 import { _sync, checkInternetConnection } from '../database/sync';
+import { useFocusEffect } from '@react-navigation/native';
 
 const AddEvent = ({navigation}: any) => {
     const { user } = useContext(AuthContext);
@@ -37,6 +38,28 @@ const AddEvent = ({navigation}: any) => {
 
     const [selectedImage, setSelectedImage] = useState<any | null>(defaultImages[0]);
 
+    useFocusEffect(
+        useCallback(() => {
+            // Reset all form fields to their default values
+            setTitle('');
+            setStartDate(null);
+            setEndDate(null);
+            setStartTime(null);
+            setEndTime(null);
+            setLocation('');
+            setGuest('');
+            setSeat(0);
+            setDesc('');
+            setShowDatePicker(false);
+            setShowTimePicker(false);
+            setIsStartDatePicker(true);
+            setIsStartTimePicker(true);
+            setErrorMessage('');
+            setSelectedImage(defaultImages[0]); // Reset to the default image
+
+        }, []) // Empty dependency array ensures this runs every time the screen is focused
+    );
+    
     const handleChoosePhoto = () => {
         launchImageLibrary(
             { mediaType: 'photo', maxWidth: 300, maxHeight: 300, quality: 1 },
@@ -228,10 +251,7 @@ const AddEvent = ({navigation}: any) => {
                 await createEventOnline(eventData);
                 await createEventLocally(await getDBConnection(), eventData);
                 await _sync();
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'My Event' }],
-                });
+                navigation.navigate('Event Page');
             } catch (error) {
                 console.log('Error creating event:', error);
                 Alert.alert('Error', 'An error occurred while creating the event. Please try again.');

@@ -213,11 +213,7 @@ const EditEvent = ({navigation, route}: any) => {
                 <View style={styles.container}>
                     <View style={styles.header}>
                         <TouchableOpacity style={styles.cancelBtn}
-                        onPress={() => {
-                            navigation.reset({
-                                index: 0,
-                                routes: [{ name: 'Event' }],
-                            });}}
+                        onPress={() => {navigation.navigate('Event Page')}}
                     >
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
