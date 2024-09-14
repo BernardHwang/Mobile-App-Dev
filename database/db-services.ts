@@ -116,54 +116,44 @@ export const getEventsByEventID = async(db: SQLiteDatabase, event_id: string): P
     }
 }
 
-// Show in 'Home' screen to display the events happen in that day
-export const getEventsByDate = async (db: SQLiteDatabase, date: Date): Promise<any> => {
+export const getEventsByDate = async (db: SQLiteDatabase, date: Date): Promise<any[]> => {
     try {
-      const eventsData: any = [];
-      const formattedDate = date.toISOString().split('T')[0]; // Convert to date format YYYY-MM-DD
+        const formattedStartOfDay = moment(date).startOf('day').toISOString();  // Start of the selected day
+        const formattedEndOfDay = moment(date).endOf('day').toISOString();      // End of the selected day
 
-      const query = `
-        SELECT event_id, name, description, image, location, start_date, end_date, guest, seats, host_id
-        FROM events 
-        WHERE DATE(start_date) <= ? 
-        AND DATE(end_date) >= ? 
-        ORDER BY TIME(start_date) ASC`; // Sort by start time for that day
+        const query = `
+            SELECT event_id, name, description, image, location, start_date, end_date, guest, seats, host_id
+            FROM events 
+            WHERE start_date <= ? AND end_date >= ?`;
 
-      const results = await db.executeSql(query, [formattedDate, formattedDate]);
+        const results = await db.executeSql(query, [formattedEndOfDay, formattedStartOfDay]);
+        
+        const eventsData = results[0].rows.raw().map((item: any) => {
+            const eventStartDate = moment(item.start_date);  // Parse start_date
+            const eventEndDate = moment(item.end_date);      // Parse end_date
 
-      results.forEach(result => {
-        result.rows.raw().forEach((item: any) => {
-            const eventStartDate = moment(item.start_date).local();
-            const eventEndDate = moment(item.end_date).local();
-
-            // Structure matches the output from Firestore
-            eventsData.push({
+            return {
                 id: item.event_id,
                 name: item.name,
                 description: item.description,
                 image: item.image,
                 location: item.location,
-                start_time: eventStartDate.format('HH:mm'), // Format time for consistency
-                start_date: eventStartDate.toISOString(),
-                end_time: eventEndDate.format('HH:mm'),
-                end_date: eventEndDate.toISOString(),
+                start_date: eventStartDate.format('YYYY-MM-DD HH:mm:ss'),  // Full date with time
+                start_time: eventStartDate.format('HH:mm'),  // Extract time part
+                end_date: eventEndDate.format('YYYY-MM-DD HH:mm:ss'),      // Full date with time
+                end_time: eventEndDate.format('HH:mm'),      // Extract time part
                 guest: item.guest,
                 seats: item.seats,
                 host_id: item.host_id,
-            });
+            };
         });
-    });
-
-        console.log(eventsData);
-        console.log('Fetch event of the day offline');
         return eventsData;
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching events:', error);
         throw Error('Failed to get events');
     }
 };
 
-// Show in 'Hosted event' screen
 export const getHostEventsByUserIDOffline = async(db: SQLiteDatabase,user_id: string): Promise<any> => {
     try{
         const eventsData: any = [];

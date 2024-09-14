@@ -55,8 +55,8 @@ const EditEvent = ({navigation, route}: any) => {
             setTitle(event.name || '');
             setStartDate(moment(event.start_date).startOf('day').toDate());
             setEndDate(moment(event.end_date).startOf('day').toDate());
-            setStartTime(event.start_date);
-            setEndTime(event.end_date);
+            setStartTime(moment(event.start_date).toDate());
+            setEndTime(moment(event.end_date).toDate());
             setLocation(event.location || '');
             setGuest(event.guest || '');
             setSeat(event.seats || 0);
@@ -213,7 +213,10 @@ const EditEvent = ({navigation, route}: any) => {
                 <View style={styles.container}>
                     <View style={styles.header}>
                         <TouchableOpacity style={styles.cancelBtn}
-                        onPress={() => {navigation.navigate('Event Page')}}
+                        onPress={() => {navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Event' }],
+                        });}}
                     >
                             <Text style={styles.btnText}>Cancel</Text>
                         </TouchableOpacity>
