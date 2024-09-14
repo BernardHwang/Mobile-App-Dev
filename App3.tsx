@@ -35,9 +35,6 @@ const Routes = () => {
     _sync();
   }, []);
 
-  //TODO: consider whether to implement or delete
-  //if (initializing) return null;
-
   return (
     <NavigationContainer>
        {user ? (

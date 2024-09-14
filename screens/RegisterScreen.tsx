@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, Button, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import auth from "@react-native-firebase/auth";
+import { View, Text, KeyboardAvoidingView, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import { AppButton, InputWithLabel } from '../UI';
 

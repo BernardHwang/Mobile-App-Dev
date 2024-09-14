@@ -11,6 +11,7 @@ import { fetchEventsForSelectedDay } from '../database/firestore-service';
 import { checkInternetConnection } from '../database/sync';
 import { getDBConnection, getEventsByDate } from '../database/db-services';
 import { useFocusEffect } from '@react-navigation/native';
+import { DrawerButton } from '../UI';
 
 const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
@@ -22,7 +23,7 @@ const HomeScreen = ({ navigation }:any) => {
 
   // useEffect(() => {
   //   fetchEvents();
-  
+
   //   const unsubscribe = firestore()
   //     .collection('users')
   //     .doc(user.uid)
@@ -32,7 +33,7 @@ const HomeScreen = ({ navigation }:any) => {
   //     }, (error) => {
   //       console.error('Error fetching real-time notifications:', error);
   //     });
-      
+
   //   return () => unsubscribe();
   // }, [navigation, selectedDay, user.uid]);
 
@@ -51,17 +52,17 @@ const HomeScreen = ({ navigation }:any) => {
         }, (error) => {
           console.error('Error fetching real-time notifications:', error);
         });
-      
+
       return () => unsubscribe(); // Clean up on unmount
     }, [selectedDay, user.uid]) // Re-run this effect when selectedDay or user.uid changes
   );
 
   const fetchEvents = async () => {
     const connected = await checkInternetConnection();
-    const events = connected 
+    const events = connected
     ? await fetchEventsForSelectedDay(selectedDay)
     : await getEventsByDate(await getDBConnection(), new Date(selectedDay));
-    
+
     setEvents(events);
   };
 
@@ -98,6 +99,7 @@ const HomeScreen = ({ navigation }:any) => {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+        <DrawerButton />
         <Text style={{ fontSize: 30, fontWeight: '500' }}>Home</Text>
         <IconBadge
           MainElement={

@@ -5,9 +5,9 @@ import { InputWithLabel, AppButton} from '../UI.tsx'
 
 const ForgetPasswordScreen = ({ navigation, route }: any) => {
 
-  const { resetPassword } = useContext(AuthContext);
+  const { loading,resetPassword } = useContext(AuthContext);
   const [email, setEmail] = useState('');
-  const [emailErr, setEmailErr] = useState<any>('');
+  const [emailErr, setEmailErr] = useState('');
 
   const validation = (input: any) => {
     let isValid = true;
@@ -50,6 +50,7 @@ const ForgetPasswordScreen = ({ navigation, route }: any) => {
           <AppButton
             title="Continue"
             onPress= {() => {resetPassword(email)}}
+            disabled={loading}
           />
         <View style={{ flex: .1, backgroundColor: "#E6E6FA", flexDirection: "row", marginLeft: 30 }}>
           <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
@@ -73,6 +74,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-})
+});
 
 export default ForgetPasswordScreen

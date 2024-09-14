@@ -1,11 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {ProfileActionButton} from '../UI';
 import firestore from '@react-native-firebase/firestore';
-
-//! need to change the edit profile >> profile icon
-//! change not hardcode
 
 const ProfileScreen = ({ navigation }: any) => {
     const { user,resetPassword , updateEmail, deleteAccount, logout } = useContext(AuthContext);
@@ -27,49 +25,53 @@ const ProfileScreen = ({ navigation }: any) => {
         );
     };
 
-    const handleResetEmail = async (newEmail:any) => {
-      //!here need to update
-      newEmail = 'lim.vincy188@gmail.com';
-      updateEmail(newEmail);
-    };
-
-    const handleResetPassword = async () => {
-      resetPassword(user.email);
-    };
+    useEffect(()=>{
+        getUserData();
+    },[]);
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Profile Image */}
-            <Image style={styles.profileImage} source={{ uri: user?.photoURL || 'https://placehold.co/100x100' }} />
-
-            {/* Display User Information */}
-          <Text style={styles.nameText}>{user.displayName}</Text>
-            <Text style={styles.infoText}>{user.email}</Text>
-            <Text style={styles.infoText}>{userData.phone}</Text>
-
-            {/* Touchable Areas */}
-            <View style={styles.touchableContainer}>
-                <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('EditProfile')}>
-                    <Text style={styles.touchableText}>Edit Profile</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.touchable} onPress={handleResetEmail}>
-                    <Text style={styles.touchableText}>Change Email</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.touchable} onPress={handleResetPassword}>
-                    <Text style={styles.touchableText}>Change Password</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={[styles.touchable, styles.danger]} onPress={handleDeleteAccount}>
-                    <Text style={styles.touchableText}>Delete Account</Text>
-                </TouchableOpacity>
+            <View style={styles.profileContainer}>
+                <Text style={styles.header}>My Profile</Text>
+                <View style={styles.imageWrapper}>
+                <Image style={styles.profileImage} source={{uri: user?.photoURL}} />
+                </View>
+                <Text style={styles.nameText}>{user.displayName}</Text>
+                <Text style={styles.infoText}>{user.email}</Text>
+                <Text style={styles.infoText}>{userData.phone}</Text>
             </View>
+            <View style={styles.touchableContainer}>
+                <ProfileActionButton
+                    title='Edit Profile'
+                    iconName='account-edit'
+                    onPress={() => navigation.navigate('EditProfile')}
+                />
 
-            {/* Logout Button */}
-            <TouchableOpacity style={styles.logoutTouchable} onPress={() => logout()}>
-                <Text style={styles.logoutText}>Logout</Text>
-            </TouchableOpacity>
+                <ProfileActionButton
+                    title='Email Address'
+                    iconName='email'
+                    onPress={() => navigation.navigate('EditEmail')}
+                />
+
+                <ProfileActionButton
+                    title='Password'
+                    iconName='lock'
+                    onPress={() => navigation.navigate('EditPassword')}
+                />
+
+                <ProfileActionButton
+                    title='Delete Account'
+                    iconName='account-cancel'
+                    onPress={handleDeleteAccount}
+                />
+                <ProfileActionButton
+                    title='Log Out'
+                    iconName='logout'
+                    onPress={logout}
+                    backgroundColor='#3e2769'
+                    color= '#eee'
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -79,54 +81,55 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#f8f8f8',
+        backgroundColor: '#fff',
+    },
+    profileContainer:{
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#3e2769',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+    },
+    header:{
+        color: '#ffffff',
+        fontSize: 30,
+        fontWeight: 'bold',
+        marginTop: 0,
+        marginBottom:30,
+
+    },
+    imageWrapper: {
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+        overflow: 'hidden',
+        marginBottom: 20,
+        borderColor: '#fff',
+        borderWidth: 3,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     profileImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 20,
+        width: '100%',
+        height: '100%',
+        flex: 1,
     },
     nameText: {
-        fontSize: 22,
+        fontSize: 28,
         fontWeight: 'bold',
+        color: '#fff',
         marginBottom: 5,
     },
     infoText: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 10,
+        fontSize: 15,
+        color: '#E0E0E0',
+        marginBottom: 5,
     },
     touchableContainer: {
-        width: '100%',
+        width: '97%',
         marginVertical: 20,
-    },
-    touchable: {
-        padding: 15,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-    },
-    touchableText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    danger: {
-        backgroundColor: '#ffe6e6',
-    },
-    logoutTouchable: {
-        padding: 15,
-        backgroundColor: '#1e90ff',
-        borderRadius: 10,
-        width: '100%',
-        alignItems: 'center',
-        marginVertical: 20,
-    },
-    logoutText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
     },
 });
 

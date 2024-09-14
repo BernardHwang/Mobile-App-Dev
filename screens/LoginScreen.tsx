@@ -1,12 +1,9 @@
-import { View, Text, TextInput, ActivityIndicator, Alert, Button, KeyboardAvoidingView, StyleSheet, TouchableNativeFeedback } from 'react-native'
+import { View, Text, KeyboardAvoidingView, StyleSheet } from 'react-native'
 import React, { useContext, useState } from 'react'
-import app from "@react-native-firebase/app"
-import auth from "@react-native-firebase/auth"
 import { AuthContext } from '../navigation/AuthProvider';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler'
 import {AppButton, InputWithLabel} from '../UI';
 
-//TODO: Precise Error message
 const LoginScreen = ({navigation, route}: any) => {
 
     const { login, loading } = useContext(AuthContext);
