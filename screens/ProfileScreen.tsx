@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, Dimensions, ScrollView } from 'react-native';
 import { AuthContext } from '../navigation/AuthProvider';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {ProfileActionButton} from '../UI';
@@ -87,7 +87,7 @@ const ProfileScreen = ({ navigation }: any) => {
                 <Text style={styles.infoText}>{user.email}</Text>
                 <Text style={styles.infoText}>{userData?.phone}</Text>
             </View>
-            <View style={styles.touchableContainer}>
+            <ScrollView style={styles.touchableContainer}>
                 <ProfileActionButton
                     title='Edit Profile'
                     iconName='account-edit'
@@ -118,7 +118,7 @@ const ProfileScreen = ({ navigation }: any) => {
                     backgroundColor='#3e2769'
                     color= '#eee'
                 />
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -129,15 +129,16 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         backgroundColor: '#fff',
+        height: Dimensions.get('window').height
     },
     profileContainer:{
-        flex: 1,
         width: '100%',
         backgroundColor: '#3e2769',
         justifyContent: 'center',
         alignItems: 'center',
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
+        height: Dimensions.get('window').height * .45
     },
     header:{
         color: '#ffffff',
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     },
     touchableContainer: {
         width: '97%',
-        marginVertical: 20,
+        marginVertical: 10,
     },
 });
 
