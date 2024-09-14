@@ -18,7 +18,7 @@ const HomeScreen = ({ navigation }:any) => {
   const { user, logout } = useContext(AuthContext);
   // Initialize selectedDay as a moment object
   const [selectedDay, setSelectedDay] = useState(moment().format('YYYY-MM-DD'));
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
@@ -49,7 +49,7 @@ const HomeScreen = ({ navigation }:any) => {
     ? await fetchEventsForSelectedDay(selectedDay)
     : await getEventsByDate(await getDBConnection(), new Date(selectedDay));
     
-    setEvents(eventsGet);
+    setEvents(eventsGet ?? []);
   };
 
   const selectDay = () => {
