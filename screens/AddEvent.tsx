@@ -59,14 +59,14 @@ const AddEvent = ({navigation}: any) => {
 
         }, []) // Empty dependency array ensures this runs every time the screen is focused
     );
-    
+
     const handleChoosePhoto = () => {
         launchImageLibrary(
             { mediaType: 'photo', maxWidth: 300, maxHeight: 300, quality: 1 },
             (response) => {
                 if (response.assets && response.assets.length > 0) {
                     const userImage = response.assets[0].uri;
-                    setSelectedImage({uri: userImage}); 
+                    setSelectedImage({uri: userImage});
                 }
             }
         );
@@ -81,7 +81,7 @@ const AddEvent = ({navigation}: any) => {
 
         return downloadUrl;
     };
-    
+
     const handleDatePickerChange = (selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
@@ -93,7 +93,7 @@ const AddEvent = ({navigation}: any) => {
                 }
             } else {
                 setEndDate(selectedDate);
-                
+
             }
         }
     };
@@ -124,25 +124,25 @@ const AddEvent = ({navigation}: any) => {
 
     const getNextEventId = async () => {
         const counterRef = firestore().collection('counters').doc('eventCounter');
-    
+
         try {
             const newId = await firestore().runTransaction(async (transaction) => {
                 const counterDoc = await transaction.get(counterRef);
-    
+
                 if (!counterDoc.exists) {
                     // If the document doesn't exist, initialize it with count = 0
                     transaction.set(counterRef, { count: 0 });
                     return 'E1'; // The first event ID
                 }
-    
+
                 const currentCount = counterDoc.data().count || 0;
                 const newCount = currentCount + 1;
-    
+
                 transaction.update(counterRef, { count: newCount });
-    
+
                 return 'E' + newCount;
             });
-    
+
             return newId;
         } catch (error) {
             console.log("Transaction failed: ", error);
@@ -173,26 +173,26 @@ const AddEvent = ({navigation}: any) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
-    
+
     const handleSubmit = async () => {
         if (!eventTitle.trim()) {
             Alert.alert('Validation Error', 'Event title is required.');
             return;
         }
-    
+
         // Check for missing dates or times
         if (!startDate || !endDate || !startTime || !endTime) {
             Alert.alert('Validation Error', 'All date and time fields are required.');
             return;
         }
-    
+
         // Validate guest email
         if (guest.trim() != '') {
             if (!validateEmail(guest.trim())){
                 Alert.alert('Validation Error', 'Please enter a valid guest email.');
                 return;
             }
-            
+
         }
 
         // Validate location
@@ -212,7 +212,7 @@ const AddEvent = ({navigation}: any) => {
             Alert.alert('Validation Error', 'Please enter an event description.');
             return false;
         }
-        
+
         return true;
     };
 
@@ -220,7 +220,7 @@ const AddEvent = ({navigation}: any) => {
     const addEvent = async () => {
         if (await handleSubmit()){
             try {
-        
+
                 let imageUrl = '';
                 if (selectedImage && selectedImage.uri && typeof selectedImage.uri === 'string') {
                     if (selectedImage.uri.startsWith('file://')) {
@@ -233,7 +233,7 @@ const AddEvent = ({navigation}: any) => {
                 }
 
                 const eventID = await getNextEventId();
-        
+
                 // Prepare event data object
                 const eventData = {
                     event_id: eventID,
@@ -247,7 +247,7 @@ const AddEvent = ({navigation}: any) => {
                     image: imageUrl,
                     host_id: user.uid
                 };
-                
+
                 await createEventOnline(eventData);
                 await createEventLocally(await getDBConnection(), eventData);
                 await _sync();
@@ -260,6 +260,7 @@ const AddEvent = ({navigation}: any) => {
     };
 
     return (
+        <View style={{ flex: 1, backgroundColor: '#e6e6fa' }}>
             <ScrollView keyboardShouldPersistTaps='always'>
                 <View style={styles.container}>
                     <View style={styles.header}>
@@ -374,17 +375,17 @@ const AddEvent = ({navigation}: any) => {
                                 },
                                 listView: {
                                 backgroundColor: 'white',
-                                position: 'absolute', 
-                                top: 45, 
+                                position: 'absolute',
+                                top: 45,
                                 left: 0,
                                 right: 0,
-                                zIndex: 2, 
+                                zIndex: 2,
                                 },
                             }}
                             />
                         </View>
                     </View>
-                    
+
                     <InputWithIconLabel
                     orientation={'horizontal'}
                     iconName={"account-plus"}
@@ -465,9 +466,10 @@ const AddEvent = ({navigation}: any) => {
                     />
                 )}
                 </View>
-                
+
                 </ScrollView>
-        
+        </View>
+
     );
 };
 
@@ -560,8 +562,8 @@ const styles = StyleSheet.create({
     selectedImage: {
         width: 100,
         height: 100,
-        borderWidth: 3,           
-        borderColor: 'black', 
+        borderWidth: 3,
+        borderColor: 'black',
         borderRadius: 10,
     },
     textInputContainer: {

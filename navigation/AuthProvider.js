@@ -3,7 +3,7 @@ import auth, { updateProfile, EmailAuthProvider, deleteUser, updatePassword, upd
 import {Alert} from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import storage from "@react-native-firebase/storage";
-import { getJoinEventsByUserIDOnline } from '../database/firestore-service';
+import { getJoinEventsByUserIDOnline, getHostEventsByUserIDOnline } from '../database/firestore-service';
 
 export const AuthContext = createContext();
 
@@ -85,6 +85,7 @@ export const AuthProvider = ({children}) => {
             console.log('User data is deleted in Firestore');
 
             await deleteUserJoinEvent(userID);
+            await deleteUserHostedEvent(userID);
         }catch(error){
             console.log('Error deleting user in Firestore: ', error);
         }
@@ -109,6 +110,22 @@ export const AuthProvider = ({children}) => {
         }
     }
 
+    const deleteUserHostedEvent = async (userID) => {
+        try {
+            const hostedEvents = await getHostEventsByUserIDOnline(userID);
+            const batch = firestore().batch();
+
+            hostedEvents.forEach(doc => {
+                const eventRef = firestore().collection('events').doc(doc.event_id);
+                batch.delete(eventRef);
+            });
+            await batch.commit();
+            console.log(`All events hosted by user with ID ${userID} deleted successfully.`);
+        } catch (error) {
+            console.log('Error delete user hosted event: ', error);
+        }
+    }
+
     return (
         <AuthContext.Provider
             value={{
@@ -117,8 +134,12 @@ export const AuthProvider = ({children}) => {
                 loading,
                 login: async (email, password) => {
                     try{
-                        setLoading(true);
-                        await auth().signInWithEmailAndPassword(email,password);
+                        if (!email|| !password){
+                            Alert.alert("Login Failed", "Please make sure you filled up email and password field");
+                        }else{
+                            setLoading(true);
+                            await auth().signInWithEmailAndPassword(email, password);
+                        }
                     }catch(error){
                         //* Handle firebase auth validation */
                         if (error.code == "auth/invalid-email"){
@@ -143,27 +164,31 @@ export const AuthProvider = ({children}) => {
                 },
                 register: async (email, password, name, phone) => {
                     try {
-                        setLoading(true);
-                        // Create user with email and password
-                        const {user} = await auth().createUserWithEmailAndPassword(email, password);
+                        if (!email || !password || !name || !phone){
+                            Alert.alert("Register Failed", "Please filled up all the details");
+                        }else{
+                            setLoading(true);
+                            // Create user with email and password
+                            const { user } = await auth().createUserWithEmailAndPassword(email, password);
 
-                        // Reference to image in Firebase storage and get the download URL
-                        const url = await storage().ref('default_pfp.jpg').getDownloadURL();
+                            // Reference to image in Firebase storage and get the download URL
+                            const url = await storage().ref('default_pfp.jpg').getDownloadURL();
 
-                        // Update user profile with name and photo
-                        await updateUserProfile(user, name, url);
+                            // Update user profile with name and photo
+                            await updateUserProfile(user, name, url);
 
-                        // Reload user to get updated details
-                        await user.reload();
-                        const updatedUser = auth().currentUser;
+                            // Reload user to get updated details
+                            await user.reload();
+                            const updatedUser = auth().currentUser;
 
-                        // Set user in state
-                       await setUser(updatedUser);
+                            // Set user in state
+                            await setUser(updatedUser);
 
-                        // Save user details to Firestore
-                        await saveUserDetailsToFirestore(updatedUser, phone);
+                            // Save user details to Firestore
+                            await saveUserDetailsToFirestore(updatedUser, phone);
 
-                        console.log('User registered and added to Firestore');
+                            console.log('User registered and added to Firestore');
+                        }
                     } catch (error) {
                         //* Handle firebase auth validation */
                         if (error.code == 'auth/email-already-in-use'){
