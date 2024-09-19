@@ -14,7 +14,7 @@ export const checkInternetConnection = async () => {
       return false; // in case of error, assume no connection
     }
   };
-  
+
   // Function to sync users data from Firestore to SQLite
   export const syncUsersData = async (db: SQLiteDatabase) => {
       try {
@@ -24,7 +24,7 @@ export const checkInternetConnection = async () => {
           user_id: doc.id,
           ...doc.data() as Omit<User, 'user_id'>
       }));
-    
+
       // Insert or update users in SQLite
       await db.transaction(tx => {
         usersData.forEach(user => {
@@ -40,25 +40,25 @@ export const checkInternetConnection = async () => {
         console.error('Error syncing users data: ', error);
       }
     };
-    
+
     // Function to sync events data from Firestore to SQLite
     export const syncEventsData = async (db: SQLiteDatabase) => {
       try {
         await db.transaction(tx => {
-          tx.executeSql('DELETE FROM events', [], 
+          tx.executeSql('DELETE FROM events', [],
             () => console.log('Events table cleared'),
             (tx, error) => console.error('Error clearing events table:', error)
           );
         });
         // Fetch events from Firestore
         const eventsSnapshot = await firestore().collection('events').get();
-        
+
         const eventsData: Event[] = eventsSnapshot.docs.map(doc => {
           const data = doc.data();
           return {
             event_id: doc.id,
-            start_date: data.start_date.toDate().toISOString(),  
-            end_date: data.end_date.toDate().toISOString(),      
+            start_date: data.start_date.toDate().toISOString(),
+            end_date: data.end_date.toDate().toISOString(),
             name: data.name,
             description: data.description,
             location: data.location,
@@ -83,30 +83,30 @@ export const checkInternetConnection = async () => {
         console.error('Error syncing events data: ', error);
       }
     };
-    
+
   // Function to sync event participants data from Firestore to SQLite
   export const syncEventsParticipantsData = async (db: SQLiteDatabase) => {
       try {
         await db.transaction(tx => {
-          tx.executeSql('DELETE FROM events_participants', [], 
+          tx.executeSql('DELETE FROM events_participants', [],
             () => console.log('Events_Participants table cleared'),
             (tx, error) => console.error('Error clearing events_participants table:', error)
           );
         });
         // Fetch all events
         const eventsSnapshot = await firestore().collection('events').get();
-  
+
         // Iterate through each event to fetch participants
         for (const eventDoc of eventsSnapshot.docs) {
           const eventID = eventDoc.id;
-  
+
           // Fetch participants for the event
           const participantsSnapshot = await firestore().collection(`events/${eventID}/eventParticipant`).get();
           const participantsData = participantsSnapshot.docs.map(doc => ({
               participant_id: doc.data().participant_id,
               notification_status: doc.data().notification_status
           }));
-  
+
           // Insert or update event participants in SQLite
           for (const participant of participantsData) {
             await db.executeSql(
@@ -116,7 +116,7 @@ export const checkInternetConnection = async () => {
             );
           }
         }
-    
+
         console.log('Event participants data synced successfully');
       } catch (error) {
         console.error('Error syncing event participants data: ', error);
@@ -142,7 +142,7 @@ export const syncOfflineData = async (db: SQLiteDatabase) => {
       // After successful sync, mark as synced
       await markEventAsSynced(db, event.event_id);
     });
-    
+
     console.log('Offline data synced to Firestore');
   } catch (error) {
     console.error('Failed to sync offline data:', error);
@@ -176,8 +176,8 @@ export const listenForFirestoreChanges = async (db: SQLiteDatabase) => {
               event_id: change.doc.id, // Use doc ID as event_id
               name: data.name,
               description: data.description,
-              start_date: data.start_date,  
-              end_date: data.end_date,      
+              start_date: data.start_date,
+              end_date: data.end_date,
               location: data.location,
               seats: data.seats,
               guest: data.guest,
@@ -185,7 +185,7 @@ export const listenForFirestoreChanges = async (db: SQLiteDatabase) => {
               host_id: data.host_id,
               //sync_status: data.sync_status || 'synced'  // You can set a default for sync_status if needed
             };
-    
+
             if (change.type === 'added') {
               await createEventLocally(db, event); // Insert into SQLite
             } else if (change.type === 'modified') {
@@ -196,4 +196,3 @@ export const listenForFirestoreChanges = async (db: SQLiteDatabase) => {
       }});
     });
   };
-  

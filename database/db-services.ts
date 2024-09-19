@@ -11,7 +11,7 @@ export const getDBConnection = async() => {
         console.log('Database connection already open.');
         return db; // Return the already opened database
       }
-    
+
       try {
         db = await openDatabase(
           { name: `${databaseName}`}, // Ensure the correct name and location
@@ -48,7 +48,7 @@ export const closeDBConnection = async (): Promise<void> => {
       console.log('Database connection was already closed.');
     }
   };
-  
+
 export const createUsersTable = async(db: SQLiteDatabase) => {
     try{
         const query = `CREATE TABLE IF NOT EXISTS users (
@@ -123,11 +123,11 @@ export const getEventsByDate = async (db: SQLiteDatabase, date: Date): Promise<a
 
         const query = `
             SELECT event_id, name, description, image, location, start_date, end_date, guest, seats, host_id
-            FROM events 
+            FROM events
             WHERE start_date <= ? AND end_date >= ?`;
 
         const results = await db.executeSql(query, [formattedEndOfDay, formattedStartOfDay]);
-        
+
         const eventsData = results[0].rows.raw().map((item: any) => {
             const eventStartDate = moment(item.start_date);  // Parse start_date
             const eventEndDate = moment(item.end_date);      // Parse end_date

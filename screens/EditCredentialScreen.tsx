@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
         //width:'90%',
         width: Dimensions.get('window').width * 0.9,
         //height: '65%',
-        height: Dimensions.get('window').height * 0.55,
+        height: Dimensions.get('window').height * 0.60,
         //padding: 20,
         padding: Dimensions.get('window').width * 0.05,
         //paddingVertical: 40,

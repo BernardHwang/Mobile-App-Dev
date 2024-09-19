@@ -12,7 +12,7 @@ import { _sync, checkInternetConnection } from '../database/sync';
 
 const EditEvent = ({navigation, route}: any) => {
     const { user } = useContext(AuthContext);
-    
+
     const [eventID, setEventID] = useState<string>(route.params.event_id);
     const [event, setEvent] = useState<any>(null);
     const [eventTitle, setTitle] = useState<string>('');
@@ -206,7 +206,7 @@ const EditEvent = ({navigation, route}: any) => {
     };
 
     return (
-
+        <View style={{ flex: 1, backgroundColor: '#e6e6fa' }}>
             <ScrollView keyboardShouldPersistTaps='always'>
                 {event
                 ? (
@@ -406,7 +406,7 @@ const EditEvent = ({navigation, route}: any) => {
                     )}
                 </ScrollView>
 
-
+        </View>
     );
 };
 
